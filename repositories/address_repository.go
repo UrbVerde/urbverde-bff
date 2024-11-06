@@ -7,21 +7,8 @@ import (
 	"strings"
 )
 
-type Suggestion struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
-}
-
 type AddressRepository interface {
-	SearchAddress(query string, filter string) ([]Suggestion, error)
-}
-
-type externalAddressRepository struct {
-	cachedCities []IBGEResponse
-}
-
-func NewExternalAddressRepository() AddressRepository {
-	return &externalAddressRepository{}
+	SearchAddress(query string) ([]string, error)
 }
 
 type IBGEResponse struct {
@@ -35,64 +22,39 @@ type IBGEResponse struct {
 	} `json:"microrregiao"`
 }
 
-func (repo *externalAddressRepository) fetchCities() error {
-	if len(repo.cachedCities) > 0 {
-		return nil
-	}
+type externalAddressRepository struct{}
 
-	url := "https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
+func NewExternalAddressRepository() AddressRepository {
+	return &externalAddressRepository{}
+}
+
+func (r *externalAddressRepository) SearchAddress(query string) ([]string, error) {
+
+	url := fmt.Sprintf("https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=%s", query)
+
 	resp, err := http.Get(url)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("erro ao fazer a requisição: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if err := json.NewDecoder(resp.Body).Decode(&repo.cachedCities); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (repo *externalAddressRepository) SearchAddress(query string, filter string) ([]Suggestion, error) {
-	err := repo.fetchCities()
-	if err != nil {
-		return nil, err
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("erro na requisição. Código de status: %d", resp.StatusCode)
 	}
 
-	if len(query) < 3 {
-		return nil, nil
+	var cities []IBGEResponse
+	if err := json.NewDecoder(resp.Body).Decode(&cities); err != nil {
+		return nil, fmt.Errorf("erro ao decodificar a resposta: %w", err)
 	}
 
-	query = strings.ToLower(query)
-	filteredSuggestions := []Suggestion{}
-
-	states := []string{
-		"Acre", "Alagoas", "Amapá", "Amazonas", "Bahia", "Ceará", "Distrito Federal",
-		"Espírito Santo", "Goiás", "Maranhão", "Mato Grosso", "Mato Grosso do Sul",
-		"Minas Gerais", "Pará", "Paraíba", "Paraná", "Pernambuco", "Piauí",
-		"Rio de Janeiro", "Rio Grande do Norte", "Rio Grande do Sul", "Rondônia",
-		"Roraima", "Santa Catarina", "São Paulo", "Sergipe", "Tocantins", "Brasil",
-	}
-
-	for _, state := range states {
-		if strings.HasPrefix(strings.ToLower(state), query) && (filter == "all" || filter == "state") {
-			filteredSuggestions = append(filteredSuggestions, Suggestion{
-				Text: state,
-				Type: "state",
-			})
-		}
-	}
-
-	for _, city := range repo.cachedCities {
+	var cityNames []string
+	qL := strings.ToLower(query)
+	for _, city := range cities {
 		cityName := strings.ToLower(city.Nome)
-		if strings.HasPrefix(cityName, query) && (filter == "all" || filter == "city") {
-			cityText := fmt.Sprintf("%s - %s", city.Nome, city.Microrregiao.Mesorregiao.UF.Sigla)
-			filteredSuggestions = append(filteredSuggestions, Suggestion{
-				Text: cityText,
-				Type: "city",
-			})
+		if strings.HasPrefix(cityName, qL) {
+			cityNames = append(cityNames, fmt.Sprintf("%s - %s", city.Nome, city.Microrregiao.Mesorregiao.UF.Sigla))
 		}
 	}
 
-	return filteredSuggestions, nil
+	return cityNames, nil
 }

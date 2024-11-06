@@ -18,22 +18,9 @@ func NewAddressController(service services.AddressService) *AddressController {
 }
 
 func (ac *AddressController) GetSuggestions(c *gin.Context) {
-	query := c.Query("q")
-	filter := c.Query("filter")
+	query := c.Query("query")
 
-	// Define acceptable filter values
-	validFilters := map[string]bool{
-		"all":   true,
-		"city":  true,
-		"state": true,
-	}
-
-	// Set default filter if not provided or invalid
-	if !validFilters[filter] {
-		filter = "all"
-	}
-
-	suggestions, err := ac.AddressService.GetSuggestions(query, filter)
+	suggestions, err := ac.AddressService.GetSuggestions(query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Erro ao buscar sugestões",
