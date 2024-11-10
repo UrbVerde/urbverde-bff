@@ -43,9 +43,11 @@ API desenvolvida em Go para fornecer sugestões de endereço e outros serviços 
 
 ## Rotas Disponíveis
 
+Você pode listar os endpoints em: http://localhost:8080/api/v1/endpoints
+
 - `GET /api/v1/address/suggestions`: Retorna sugestões de endereços.
-- `GET /api/v1/city/bounds`: Retorna os dados de localização e código do município.
-- `GET /api/v1/data`: Retorna as camadas e categorias disponiveis para o código do municipio.
+- ⚙️ **[em desenvolvimento]** `GET /api/v1/city/bounds`: Retorna os dados de localização e código do município.
+- ⚙️ **[em desenvolvimento]** `GET /api/v1/data`: Retorna as camadas e categorias disponiveis para o código do municipio.
 
 ---
 
