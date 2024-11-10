@@ -46,4 +46,8 @@ jobs:
           # Atualize a imagem Docker e reinicie o serviço específico
           docker-compose pull ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest
           docker-compose up -d --no-deps --build urbverde-bff
+<<<<<<< HEAD
       
+=======
+      
+>>>>>>> c95d48aabf7e962764ec57d5025c2918bff826b3
