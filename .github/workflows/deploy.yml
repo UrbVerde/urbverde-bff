@@ -32,11 +32,11 @@ jobs:
         password: ${{ secrets.PRODUCTION_PASSWORD }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: |
-          cd /home/zukk/sphere-api-stack
+          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
 
           # Clone o repositório caso não exista, ou atualize com git pull
           if [ ! -d "urbverde-bff" ]; then
-            git clone https://github.com/UrbVerde/urbverde-bff.git
+            git clone https://${{ secrets.GH_PAT }}@github.com/UrbVerde/urbverde-bff.git
           else
             cd urbverde-bff
             git pull origin main  # Atualiza a branch principal
@@ -44,6 +44,6 @@ jobs:
           fi
 
           # Atualize a imagem Docker e reinicie o serviço específico
-          docker-compose pull ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest -f urbverde-bff/Dockerfile urbverde-bff
+          docker-compose pull urbverde-bff
           docker-compose up -d --no-deps --build urbverde-bff
       
