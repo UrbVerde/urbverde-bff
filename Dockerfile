@@ -1,4 +1,3 @@
-# Etapa de build
 FROM golang:1.23-alpine AS builder
 
 # Define o diretório de trabalho no container
