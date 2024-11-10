@@ -14,7 +14,7 @@ API desenvolvida em Go para fornecer sugestões de endereço e outros serviços 
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/UrbVerde/urbverde-ui.git
+   git clone https://github.com/UrbVerde/urbverde-bff.git
    cd urbverde-ui
    ```
 
@@ -28,7 +28,7 @@ API desenvolvida em Go para fornecer sugestões de endereço e outros serviços 
    go run main.go
    ```
 
-4. Acesse a API localmente em `http://localhost:8080/api/v1/address/suggestions`.
+4. Acesse a API localmente em `[http://localhost:8080/api/v1/address/suggestions]http://localhost:8080/api/v1/address/suggestions`.
 
 ### Opção 2: Rodar com Docker Compose
 
