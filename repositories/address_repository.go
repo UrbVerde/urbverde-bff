@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 type AddressRepository interface {
@@ -22,15 +25,28 @@ type IBGEResponse struct {
 	} `json:"microrregiao"`
 }
 
-type externalAddressRepository struct{}
+type externalAddressRepository struct {
+	apiURL string
+}
 
+// NewExternalAddressRepository cria uma instância com a URL do .env.
 func NewExternalAddressRepository() AddressRepository {
-	return &externalAddressRepository{}
+	// Carrega as variáveis do arquivo .env
+	_ = godotenv.Load()
+
+	// Lê a variável de ambiente
+	apiURL := os.Getenv("IBGE_API_URL")
+	if apiURL == "" {
+		panic("A variável de ambiente IBGE_API_URL não está definida")
+	}
+
+	return &externalAddressRepository{
+		apiURL: apiURL,
+	}
 }
 
 func (r *externalAddressRepository) SearchAddress(query string) ([]string, error) {
-
-	url := fmt.Sprintf("https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=%s", query)
+	url := r.apiURL + query
 
 	resp, err := http.Get(url)
 	if err != nil {
