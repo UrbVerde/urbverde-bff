@@ -29,12 +29,9 @@ type externalAddressRepository struct {
 	apiURL string
 }
 
-// NewExternalAddressRepository cria uma instância com a URL do .env.
 func NewExternalAddressRepository() AddressRepository {
-	// Carrega as variáveis do arquivo .env
 	_ = godotenv.Load()
 
-	// Lê a variável de ambiente
 	apiURL := os.Getenv("IBGE_API_URL")
 	if apiURL == "" {
 		panic("A variável de ambiente IBGE_API_URL não está definida")
