@@ -52,4 +52,4 @@ jobs:
               else
                 echo "Failed to clone repository"
                 exit 1
-              fi
+              fi 
