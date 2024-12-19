@@ -32,24 +32,22 @@ jobs:
         password: ${{ secrets.PRODUCTION_PASSWORD }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: |
-          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
-
+          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/
+          
           # Clone or update repository
           if [ ! -d "urbverde-bff" ]; then
             git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
           else
             cd urbverde-bff
-            git pull origin main  # Atualiza a branch principal
+            git pull origin main
             cd ..
           fi
 
+          # Now move to the bff directory and build
           cd urbverde-bff
-
-          # Build the image locally instead of pulling from Docker Hub
           docker build -t urbverde/urbverde-bff:latest .
           
+          # Return to main directory and run with main docker-compose
           cd ..
-          
-          # Use the newly built image
           docker-compose up -d --no-deps urbverde-bff
       
