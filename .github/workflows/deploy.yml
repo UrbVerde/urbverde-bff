@@ -32,26 +32,25 @@ jobs:
         password: ${{ secrets.PRODUCTION_PASSWORD }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: |
-          set -e  # Exit on any error
+          set -e # Exit on any error
           
           echo "Starting deployment..."
           cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/urbverde-bff
           
+          echo "Setting up git credentials..."
+          # Properly format the token URL
+          TOKEN="${{ secrets.REPO_ACCESS_TOKEN }}"
+          git remote set-url origin "https://${TOKEN}@github.com/UrbVerde/urbverde-bff.git"
+          
           echo "Current git status:"
           git status
           
-          echo "Current git remote:"
-          git remote -v
-          
           echo "Fetching latest changes..."
-          git remote set-url origin https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
-          git fetch origin main
-          
-          echo "Checking differences..."
-          git rev-list HEAD...origin/main --count
+          # Use token directly in fetch command
+          git fetch "https://${TOKEN}@github.com/UrbVerde/urbverde-bff.git" main
           
           echo "Resetting to latest main..."
-          git reset --hard origin/main
+          git reset --hard FETCH_HEAD
           
           echo "Verifying update..."
           git log -1 --oneline
