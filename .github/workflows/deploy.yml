@@ -34,7 +34,7 @@ jobs:
             mkdir -p /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
             cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
             rm -rf urbverde-bff
-            git clone https://oauth2:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
+            git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
             if [ $? -eq 0 ]; then
               cd urbverde-bff
               git checkout main
