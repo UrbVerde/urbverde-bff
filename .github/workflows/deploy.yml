@@ -32,35 +32,38 @@ jobs:
         password: ${{ secrets.PRODUCTION_PASSWORD }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: |
-          set -e # Exit on any error
+          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/
           
-          echo "Starting deployment..."
-          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/urbverde-bff
-          
-          echo "Setting up git credentials..."
-          # Properly format the token URL
-          TOKEN="${{ secrets.REPO_ACCESS_TOKEN }}"
-          git remote set-url origin "https://${TOKEN}@github.com/UrbVerde/urbverde-bff.git"
-          
-          echo "Current git status:"
-          git status
-          
-          echo "Fetching latest changes..."
-          # Use token directly in fetch command
-          git fetch "https://${TOKEN}@github.com/UrbVerde/urbverde-bff.git" main
-          
-          echo "Resetting to latest main..."
-          git reset --hard FETCH_HEAD
-          
-          echo "Verifying update..."
-          git log -1 --oneline
-          ls -la
-          
+          if [ ! -d "urbverde-bff" ]; then
+            echo "Directory doesn't exist. Cloning..."
+            git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
+            if [ $? -ne 0 ]; then
+              echo "Failed to clone repository"
+              exit 1
+            fi
+          else
+            echo "Directory exists. Updating..."
+            cd urbverde-bff
+            git reset --hard
+            git clean -fd
+            echo "Current branch:"
+            git branch
+            # Configure the token for this repository
+            git config --local url."https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/".insteadOf "https://github.com/"
+            # Now fetch and pull using the configured token
+            git fetch origin
+            git checkout main
+            git pull origin main || {
+              echo "Failed to pull latest changes"
+              exit 1
+            }
+            cd ..
+          fi
+
+          cd urbverde-bff
           echo "Building docker image..."
           docker build -t urbverde/urbverde-bff:latest .
           
-          echo "Starting container with parent compose..."
           cd ..
+          echo "Starting container..."
           docker-compose up -d --no-deps urbverde-bff
-          
-          echo "Deployment complete"
