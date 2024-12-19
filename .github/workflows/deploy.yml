@@ -3,7 +3,7 @@ name: Deploy to Production
 on:
   push:
     branches:
-      - main  # Ou a branch principal do repositório
+      - main
 
 jobs:
   deploy:
@@ -34,7 +34,7 @@ jobs:
         script: |
           cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
 
-          # Clone o repositório caso não exista, ou atualize com git pull
+          # Clone or update repository
           if [ ! -d "urbverde-bff" ]; then
             git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
           else
@@ -43,7 +43,13 @@ jobs:
             cd ..
           fi
 
-          # Atualize a imagem Docker e reinicie o serviço específico
-          docker-compose pull urbverde-bff
-          docker-compose up -d --no-deps --build urbverde-bff
+          cd urbverde-bff
+
+          # Build the image locally instead of pulling from Docker Hub
+          docker build -t urbverde/urbverde-bff:latest .
+          
+          cd ..
+          
+          # Use the newly built image
+          docker-compose up -d --no-deps urbverde-bff
       
