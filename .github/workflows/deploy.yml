@@ -32,28 +32,24 @@ jobs:
         password: ${{ secrets.PRODUCTION_PASSWORD }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: |
-          # Create directory structure if it doesn't exist
-          mkdir -p /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/urbverde-bff
-          
-          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/urbverde-bff
-          
-          # Initialize git repository if it doesn't exist
-          if [ ! -d .git ]; then
-            git init
-            git remote add origin https://github.com/UrbVerde/urbverde-bff.git
-          fi
-          
-          # Configure git to use token temporarily
-          git remote set-url origin https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
-          
-          # Pull latest changes
-          git fetch origin main
-          git reset --hard origin/main
-          
-          # Reset remote to not expose token
-          git remote set-url origin https://github.com/UrbVerde/urbverde-bff.git
-          
-          # Build locally and run with parent docker-compose
-          docker build -t urbverde/urbverde-bff:latest .
+          # Ensure parent directory exists
+          mkdir -p /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
+          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
+
+          # Remove existing directory if it exists to ensure clean state
+          rm -rf urbverde-bff
+
+          # Clone the repository with authentication token
+          git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
+
+          # Ensure we're on the main branch
+          cd urbverde-bff
+          git checkout main
+          git pull origin main
+
+          # Move back to parent directory and handle Docker operations
           cd ..
-          docker-compose up -d --no-deps urbverde-bff
+          
+          # Pull/build the new image and update the service
+          docker-compose pull urbverde-bff || true  # Don't fail if image doesn't exist in registry
+          docker-compose up -d --no-deps --build urbverde-bff
