@@ -34,7 +34,6 @@ jobs:
         script: |
           cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/
           
-          # Clone or update repository with error checking
           if [ ! -d "urbverde-bff" ]; then
             echo "Directory doesn't exist. Cloning..."
             git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
@@ -45,24 +44,22 @@ jobs:
           else
             echo "Directory exists. Updating..."
             cd urbverde-bff
-            # Force clean any local changes
             git reset --hard
             git clean -fd
-            # Check current branch
             echo "Current branch:"
             git branch
-            # Force pull latest main
+            # Configure the token for this repository
+            git config --local url."https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/".insteadOf "https://github.com/"
+            # Now fetch and pull using the configured token
             git fetch origin
             git checkout main
-            git pull origin main --force
-            if [ $? -ne 0 ]; then
+            git pull origin main || {
               echo "Failed to pull latest changes"
               exit 1
-            fi
+            }
             cd ..
           fi
 
-          # Build and run
           cd urbverde-bff
           echo "Building docker image..."
           docker build -t urbverde/urbverde-bff:latest .
@@ -70,4 +67,3 @@ jobs:
           cd ..
           echo "Starting container..."
           docker-compose up -d --no-deps urbverde-bff
-      
