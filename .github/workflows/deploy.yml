@@ -3,7 +3,7 @@ name: Deploy to Production
 on:
   push:
     branches:
-      - main
+      - main  # Ou a branch principal do repositório
 
 jobs:
   deploy:
@@ -23,7 +23,6 @@ jobs:
       run: |
         docker build -t ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest .
         docker push ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest
-
     - name: Deploy to Production Server
       uses: appleboy/ssh-action@v0.1.7
       with:
@@ -32,19 +31,16 @@ jobs:
         password: ${{ secrets.PRODUCTION_PASSWORD }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: |
-          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/urbverde-bff
-          
-          # Configure git to use token temporarily
-          git remote set-url origin https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff
-          
-          # Pull latest changes
-          git fetch origin main
-          git reset --hard origin/main
-          
-          # Reset remote to not expose token
-          git remote set-url origin https://github.com/UrbVerde/urbverde-bff.git
-          
-          # Build locally and run with parent docker-compose
-          docker build -t urbverde/urbverde-bff:latest .
-          cd .. 
-          docker-compose up -d --no-deps urbverde-bff
+          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
+          # Clone o repositório caso não exista, ou atualize com git pull
+          if [ ! -d "urbverde-bff" ]; then
+            git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
+          else
+            cd urbverde-bff
+            git pull origin main  # Atualiza a branch principal
+            cd ..
+          fi
+          # Atualize a imagem Docker e reinicie o serviço específico
+          docker-compose pull urbverde-bff
+          docker-compose up -d --no-deps --build urbverde-bff
+      
