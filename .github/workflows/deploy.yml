@@ -32,38 +32,19 @@ jobs:
         password: ${{ secrets.PRODUCTION_PASSWORD }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: |
-          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/
+          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/urbverde-bff
           
-          if [ ! -d "urbverde-bff" ]; then
-            echo "Directory doesn't exist. Cloning..."
-            git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
-            if [ $? -ne 0 ]; then
-              echo "Failed to clone repository"
-              exit 1
-            fi
-          else
-            echo "Directory exists. Updating..."
-            cd urbverde-bff
-            git reset --hard
-            git clean -fd
-            echo "Current branch:"
-            git branch
-            # Configure the token for this repository
-            git config --local url."https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/".insteadOf "https://github.com/"
-            # Now fetch and pull using the configured token
-            git fetch origin
-            git checkout main
-            git pull origin main || {
-              echo "Failed to pull latest changes"
-              exit 1
-            }
-            cd ..
-          fi
-
-          cd urbverde-bff
-          echo "Building docker image..."
+          # Configure git to use token temporarily
+          git remote set-url origin https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
+          
+          # Pull latest changes
+          git fetch origin main
+          git reset --hard origin/main
+          
+          # Reset remote to not expose token
+          git remote set-url origin https://github.com/UrbVerde/urbverde-bff.git
+          
+          # Build locally and run with parent docker-compose
           docker build -t urbverde/urbverde-bff:latest .
-          
           cd ..
-          echo "Starting container..."
           docker-compose up -d --no-deps urbverde-bff
