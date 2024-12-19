@@ -32,19 +32,36 @@ jobs:
         password: ${{ secrets.PRODUCTION_PASSWORD }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: |
+          set -e  # Exit on any error
+          
+          echo "Starting deployment..."
           cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/urbverde-bff
           
-          # Configure git to use token temporarily
-          git remote set-url origin https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
+          echo "Current git status:"
+          git status
           
-          # Pull latest changes
+          echo "Current git remote:"
+          git remote -v
+          
+          echo "Fetching latest changes..."
+          git remote set-url origin https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
           git fetch origin main
+          
+          echo "Checking differences..."
+          git rev-list HEAD...origin/main --count
+          
+          echo "Resetting to latest main..."
           git reset --hard origin/main
           
-          # Reset remote to not expose token
-          git remote set-url origin https://github.com/UrbVerde/urbverde-bff.git
+          echo "Verifying update..."
+          git log -1 --oneline
+          ls -la
           
-          # Build locally and run with parent docker-compose
+          echo "Building docker image..."
           docker build -t urbverde/urbverde-bff:latest .
+          
+          echo "Starting container with parent compose..."
           cd ..
           docker-compose up -d --no-deps urbverde-bff
+          
+          echo "Deployment complete"
