@@ -8,40 +8,43 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+    - name: Checkout Repository
+      uses: actions/checkout@v2
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2 
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Docker Image
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest
+    - name: Build and Push Docker Image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest .
+        docker push ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest
 
-      - name: Deploy to Production Server
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_USER }}
-          password: ${{ secrets.PRODUCTION_PASSWORD }}
-          port: ${{ secrets.PRODUCTION_PORT }}
-          script: |
-            mkdir -p /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
-            cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
-            rm -rf urbverde-bff
-            git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
-            if [ $? -eq 0 ]; then
-              cd urbverde-bff
-              git checkout main
-              cd ..
-              docker-compose pull urbverde-bff || true
-              docker-compose up -d --no-deps --build urbverde-bff
-            else
-              echo "Failed to clone repository"
-              exit 1
-            fi
+    - name: Deploy to Production Server
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        password: ${{ secrets.PRODUCTION_PASSWORD }}
+        port: ${{ secrets.PRODUCTION_PORT }}
+        script: |
+          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/urbverde-bff
+          
+          # Configure git to use token temporarily
+          git remote set-url origin https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff
+          
+          # Pull latest changes
+          git fetch origin main
+          git reset --hard origin/main
+          
+          # Reset remote to not expose token
+          git remote set-url origin https://github.com/UrbVerde/urbverde-bff.git
+          
+          # Build locally and run with parent docker-compose
+          docker build -t urbverde/urbverde-bff:latest .
+          cd .. 
+          docker-compose up -d --no-deps urbverde-bff
