@@ -25,26 +25,26 @@ jobs:
         docker push ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest
 
     - name: Deploy to Production Server
-  uses: appleboy/ssh-action@v0.1.7
-  with:
-    host: ${{ secrets.PRODUCTION_HOST }}
-    username: ${{ secrets.PRODUCTION_USER }}
-    password: ${{ secrets.PRODUCTION_PASSWORD }}
-    port: ${{ secrets.PRODUCTION_PORT }}
-    script: |
-      cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/urbverde-bff
-      
-      # Configure git to use token temporarily
-      git remote set-url origin https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
-      
-      # Pull latest changes
-      git fetch origin main
-      git reset --hard origin/main
-      
-      # Reset remote to not expose token
-      git remote set-url origin https://github.com/UrbVerde/urbverde-bff.git
-      
-      # Build locally and run with parent docker-compose
-      docker build -t urbverde/urbverde-bff:latest .
-      cd ..
-      docker-compose up -d --no-deps urbverde-bff
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        password: ${{ secrets.PRODUCTION_PASSWORD }}
+        port: ${{ secrets.PRODUCTION_PORT }}
+        script: |
+          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/urbverde-bff
+          
+          # Configure git to use token temporarily
+          git remote set-url origin https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
+          
+          # Pull latest changes
+          git fetch origin main
+          git reset --hard origin/main
+          
+          # Reset remote to not expose token
+          git remote set-url origin https://github.com/UrbVerde/urbverde-bff.git
+          
+          # Build locally and run with parent docker-compose
+          docker build -t urbverde/urbverde-bff:latest .
+          cd ..
+          docker-compose up -d --no-deps urbverde-bff
