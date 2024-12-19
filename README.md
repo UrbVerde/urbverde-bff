@@ -15,7 +15,7 @@ API desenvolvida em Go para fornecer sugestões de endereço e outros serviços 
 1. Clone o repositório:
    ```bash
    git clone https://github.com/UrbVerde/urbverde-bff.git
-   cd urbverde-ui
+   cd urbverde-bff
    ```
 
 2. Instale as dependências listadas no `go.mod`:
