@@ -32,7 +32,16 @@ jobs:
         password: ${{ secrets.PRODUCTION_PASSWORD }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: |
+          # Create directory structure if it doesn't exist
+          mkdir -p /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/urbverde-bff
+          
           cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack/urbverde-bff
+          
+          # Initialize git repository if it doesn't exist
+          if [ ! -d .git ]; then
+            git init
+            git remote add origin https://github.com/UrbVerde/urbverde-bff.git
+          fi
           
           # Configure git to use token temporarily
           git remote set-url origin https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
