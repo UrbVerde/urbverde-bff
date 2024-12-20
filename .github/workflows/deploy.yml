@@ -3,7 +3,7 @@ name: Deploy to Production
 on:
   push:
     branches:
-      - main  # Ou a branch principal do repositório
+      - main
 
 jobs:
   deploy:
@@ -23,6 +23,7 @@ jobs:
       run: |
         docker build -t ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest .
         docker push ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest
+        
     - name: Deploy to Production Server
       uses: appleboy/ssh-action@v0.1.7
       with:
@@ -31,6 +32,7 @@ jobs:
         password: ${{ secrets.PRODUCTION_PASSWORD }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: |
+        
           cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
           # Se o diretório 'urbverde-bff' não existir, clone o repositório
           if [ ! -d "urbverde-bff" ]; then
