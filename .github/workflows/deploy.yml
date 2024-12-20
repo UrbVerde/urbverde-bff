@@ -32,15 +32,22 @@ jobs:
         port: ${{ secrets.PRODUCTION_PORT }}
         script: |
           cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
-          # Clone o repositório caso não exista, ou atualize com git pull
+          # Se o diretório 'urbverde-bff' não existir, clone o repositório
           if [ ! -d "urbverde-bff" ]; then
-            git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git
+            echo "Cloning urbverde-bff repository..."
+            git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git urbverde-bff
+            if [ $? -ne 0 ]; then
+              echo "Failed to clone urbverde-bff repository. Exiting."
+              exit 1
+            fi
           else
+            echo "urbverde-bff already exists. Pulling latest changes..."
             cd urbverde-bff
-            git pull origin main  # Atualiza a branch principal
+            git fetch origin main
+            git reset --hard origin/main
             cd ..
           fi
-          # Atualize a imagem Docker e reinicie o serviço específico
-          docker-compose pull urbverde-bff
+
+          # Construa a imagem Docker e reinicie o serviço
+          docker-compose pull urbverde-bff || true
           docker-compose up -d --no-deps --build urbverde-bff
-      
