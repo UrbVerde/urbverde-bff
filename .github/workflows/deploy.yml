@@ -34,7 +34,7 @@ jobs:
         script: |
         
           cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
-          # Se o diretório 'urbverde-bff' não existir, clone o repositório
+          # If the 'urbverde-bff' directory does not exist, clone the repository
           if [ ! -d "urbverde-bff" ]; then
             echo "Cloning urbverde-bff repository..."
             git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git urbverde-bff
@@ -50,6 +50,6 @@ jobs:
             cd ..
           fi
 
-          # Construa a imagem Docker e reinicie o serviço
+          # Build the Docker image and restart the service
           docker-compose pull urbverde-bff || true
           docker-compose up -d --no-deps --build urbverde-bff
