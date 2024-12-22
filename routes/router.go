@@ -1,13 +1,23 @@
 package routes
 
 import (
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"net/http"
+	_ "urbverde-api/docs"
 	"urbverde-api/routes/address"
 	"urbverde-api/routes/tracker"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	files "github.com/swaggo/files"
+	swagger "github.com/swaggo/gin-swagger"
 )
 
+// @title API Documentation
+// @version 1.0
+// @description API Swagger para a aplicação Go
+
+// @host localhost:8080
+// @BasePath /api/v1
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
@@ -33,6 +43,8 @@ func SetupRouter() *gin.Engine {
 			})
 		})
 	}
+
+	r.GET("/swagger/*any", swagger.WrapHandler(files.Handler))
 
 	return r
 }
