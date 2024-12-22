@@ -1,0 +1,46 @@
+definitions:
+  address.AddressSuggestion:
+    properties:
+      address:
+        type: string
+      id:
+        type: integer
+    type: object
+  address.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /address/suggestions:
+    get:
+      consumes:
+      - application/json
+      description: Retorna sugestões baseadas nos dados fornecidos
+      parameters:
+      - description: Texto para buscar sugestões
+        in: query
+        name: query
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/address.AddressSuggestion'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/address.ErrorResponse'
+      summary: Retorna sugestões de endereço
+      tags:
+      - address
+swagger: "2.0"
