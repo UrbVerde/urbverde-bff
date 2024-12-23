@@ -1,11 +1,15 @@
 package routes
 
 import (
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"net/http"
+	_ "urbverde-api/docs"
 	"urbverde-api/routes/address"
 	"urbverde-api/routes/tracker"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	files "github.com/swaggo/files"
+	swagger "github.com/swaggo/gin-swagger"
 )
 
 func SetupRouter() *gin.Engine {
@@ -21,7 +25,6 @@ func SetupRouter() *gin.Engine {
 		MaxAge:           12 * 60 * 60,
 	}))
 
-	// Define o grupo de rotas com prefixo "/api/v1"
 	apiV1 := r.Group("/api/v1")
 	{
 		address.SetupAddressRoutes(apiV1) // Carrega rotas do módulo "address"
@@ -33,6 +36,8 @@ func SetupRouter() *gin.Engine {
 			})
 		})
 	}
+
+	r.GET("/swagger/*any", swagger.WrapHandler(files.Handler))
 
 	return r
 }
