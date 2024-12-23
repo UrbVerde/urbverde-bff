@@ -12,12 +12,6 @@ import (
 	swagger "github.com/swaggo/gin-swagger"
 )
 
-// @title API Documentation
-// @version 1.0
-// @description API Swagger para a aplicação Go
-
-// @host localhost:8080
-// @BasePath /api/v1
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
@@ -31,7 +25,6 @@ func SetupRouter() *gin.Engine {
 		MaxAge:           12 * 60 * 60,
 	}))
 
-	// Define o grupo de rotas com prefixo "/api/v1"
 	apiV1 := r.Group("/api/v1")
 	{
 		address.SetupAddressRoutes(apiV1) // Carrega rotas do módulo "address"

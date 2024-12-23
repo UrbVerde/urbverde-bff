@@ -29,12 +29,10 @@ type ErrorResponse struct {
 // @Failure 400 {object} ErrorResponse
 // @Router /address/suggestions [get]
 func SetupAddressRoutes(rg *gin.RouterGroup) {
-	// Inicializa o repositório e serviço
 	addressRepo := repositories.NewExternalAddressRepository()
 	addressService := services.NewAddressService(addressRepo)
 	addressController := controllers.NewAddressController(addressService)
 
-	// Define a rota para buscar sugestões
 	rg.GET("/address/suggestions", addressController.GetSuggestions)
 	tracker.AddEndpoint("GET", "/api/v1/address/suggestions", "Retorna sugestões de endereço")
 }

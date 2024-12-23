@@ -1,3 +1,4 @@
+basePath: /api/v1
 definitions:
   address.AddressSuggestion:
     properties:
@@ -13,8 +14,12 @@ definitions:
       message:
         type: string
     type: object
+host: localhost:8080
 info:
   contact: {}
+  description: API para fornecer sugestões de endereço e outros serviços relacionados
+  title: UrbVerde API
+  version: "1.0"
 paths:
   /address/suggestions:
     get:

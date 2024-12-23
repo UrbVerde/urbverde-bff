@@ -1,8 +1,13 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "API para fornecer sugestões de endereço e outros serviços relacionados",
+        "title": "UrbVerde API",
+        "contact": {},
+        "version": "1.0"
     },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
     "paths": {
         "/address/suggestions": {
             "get": {
