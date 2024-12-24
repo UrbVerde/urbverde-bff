@@ -4,7 +4,7 @@ import (
 	"urbverde-api/routes"
 )
 
-// @title UrbVerde API
+// @title UrbVerde BFF
 // @version 1.0
 // @description API para fornecer sugestões de endereço e outros serviços relacionados
 // @host localhost:8080

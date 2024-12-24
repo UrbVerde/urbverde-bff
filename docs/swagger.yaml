@@ -18,7 +18,7 @@ host: localhost:8080
 info:
   contact: {}
   description: API para fornecer sugestões de endereço e outros serviços relacionados
-  title: UrbVerde API
+  title: UrbVerde BFF
   version: "1.0"
 paths:
   /address/suggestions:

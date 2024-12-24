@@ -89,7 +89,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "UrbVerde API",
+	Title:            "UrbVerde BFF",
 	Description:      "API para fornecer sugestões de endereço e outros serviços relacionados",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

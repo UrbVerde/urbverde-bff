@@ -2,7 +2,7 @@
     "swagger": "2.0",
     "info": {
         "description": "API para fornecer sugestões de endereço e outros serviços relacionados",
-        "title": "UrbVerde API",
+        "title": "UrbVerde BFF",
         "contact": {},
         "version": "1.0"
     },
