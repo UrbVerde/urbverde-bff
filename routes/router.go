@@ -3,12 +3,15 @@ package routes
 
 import (
 	"net/http"
+	_ "urbverde-api/docs"
 	"urbverde-api/routes/address"
 	"urbverde-api/routes/city" // Add this import
 	"urbverde-api/routes/tracker"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	files "github.com/swaggo/files"
+	swagger "github.com/swaggo/gin-swagger"
 )
 
 func SetupRouter() *gin.Engine {
@@ -36,6 +39,8 @@ func SetupRouter() *gin.Engine {
 			})
 		})
 	}
+
+	r.GET("/swagger/*any", swagger.WrapHandler(files.Handler))
 
 	return r
 }

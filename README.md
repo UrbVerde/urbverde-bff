@@ -1,4 +1,3 @@
-
 # UrbVerde API
 
 API desenvolvida em Go para fornecer sugestões de endereço e outros serviços relacionados.
@@ -51,6 +50,27 @@ Eles também estão disponíveis no servidor de produção em: https://urbverde.
 - ⚙️ **[em desenvolvimento]** `GET /api/v1/city/bounds`: Retorna os dados de localização e código do município.
 - ⚙️ **[em desenvolvimento]** `GET /api/v1/data`: Retorna as camadas e categorias disponiveis para o código do municipio.
 
----
+## Documentação Swagger
 
-Este README fornece uma visão geral de como rodar a UrbVerde API localmente, seja usando Go diretamente ou com Docker Compose.
+A API possui documentação interativa utilizando o Swagger, que pode ser gerada e atualizada automaticamente com base nos comentários do código.
+
+### Como acessar a documentação Swagger
+
+1. Certifique-se de que a API esteja rodando localmente.
+2. Acesse a interface do Swagger no navegador em:
+   [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
+3. Explore os endpoints documentados e teste as funcionalidades diretamente pela interface do Swagger.
+
+### Como atualizar a documentação Swagger
+
+Se houver mudanças nas rotas ou nos controladores, você precisará atualizar a documentação Swagger:
+
+1. Certifique-se de que o **Swag CLI** está instalado. Se ainda não estiver, instale com:
+   ```bash
+   go install github.com/swaggo/swag/cmd/swag@latest
+   ```
+2. Gere ou atualize os arquivos de documentação com o comando:
+   ```bash
+   swag init
+   ```
+3. Certifique-se de que a pasta `docs/` foi atualizada corretamente. Essa pasta contém os arquivos `swagger.json` e `swagger.yaml` utilizados pelo Swagger.
