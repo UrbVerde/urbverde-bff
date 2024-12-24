@@ -1,17 +1,20 @@
+// routes/router.go (update the existing file)
 package routes
 
 import (
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"urbverde-api/routes/address"
+	"urbverde-api/routes/city" // Add this import
 	"urbverde-api/routes/tracker"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
-	// Configurações CORS
+	// CORS configuration (your existing code)
 	r.Use(cors.New(cors.Config{
 		AllowAllOrigins:  true,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -21,12 +24,12 @@ func SetupRouter() *gin.Engine {
 		MaxAge:           12 * 60 * 60,
 	}))
 
-	// Define o grupo de rotas com prefixo "/api/v1"
 	apiV1 := r.Group("/api/v1")
 	{
-		address.SetupAddressRoutes(apiV1) // Carrega rotas do módulo "address"
+		address.SetupAddressRoutes(apiV1)
+		city.SetupCityRoutes(apiV1) // Add this line
 
-		// Endpoint para listar todas as rotas disponíveis
+		// Existing endpoints route
 		apiV1.GET("/endpoints", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{
 				"available_endpoints": tracker.AvailableEndpoints,
