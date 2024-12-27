@@ -1,3 +1,4 @@
+<!-- urbverde-bff/README.md -->
 # UrbVerde API
 
 API desenvolvida em Go para fornecer sugestões de endereço e outros serviços relacionados.
@@ -27,7 +28,7 @@ API desenvolvida em Go para fornecer sugestões de endereço e outros serviços 
    go run main.go
    ```
 
-4. Acesse a API localmente em `http://localhost:8080/api/v1/address/suggestions`.
+4. Acesse a API localmente em `http://localhost:8080/v1/address/suggestions`.
 
 ### Opção 2: Rodar com Docker Compose
 
@@ -38,7 +39,7 @@ API desenvolvida em Go para fornecer sugestões de endereço e outros serviços 
    docker-compose up --build
    ```
 
-5. A API estará acessível em `http://localhost:8080/api`.
+5. A API estará acessível em `http://localhost:8080/`.
 
 ## Rotas Disponíveis
 
@@ -46,9 +47,9 @@ Você pode listar os endpoints em: http://localhost:8080/api/v1/endpoints .
 
 Eles também estão disponíveis no servidor de produção em: https://urbverde.iau.usp.br/api/v1/endpoints
 
-- `GET /api/v1/address/suggestions`: Retorna sugestões de endereços.
-- ⚙️ **[em desenvolvimento]** `GET /api/v1/city/bounds`: Retorna os dados de localização e código do município.
-- ⚙️ **[em desenvolvimento]** `GET /api/v1/data`: Retorna as camadas e categorias disponiveis para o código do municipio.
+- `GET /v1/address/suggestions`: Retorna sugestões de endereços.
+- ⚙️ **[em desenvolvimento]** `GET /v1/city/bounds`: Retorna os dados de localização e código do município.
+- ⚙️ **[em desenvolvimento]** `GET /v1/data`: Retorna as camadas e categorias disponiveis para o código do municipio.
 
 ## Documentação Swagger
 

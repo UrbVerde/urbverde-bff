@@ -8,14 +8,13 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	files "github.com/swaggo/files"
-	swagger "github.com/swaggo/gin-swagger"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
-	// Configurações CORS
 	r.Use(cors.New(cors.Config{
 		AllowAllOrigins:  true,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -25,19 +24,25 @@ func SetupRouter() *gin.Engine {
 		MaxAge:           12 * 60 * 60,
 	}))
 
-	apiV1 := r.Group("/api/v1")
+	// API routes under /v1
+	v1 := r.Group("/v1")
 	{
-		address.SetupAddressRoutes(apiV1) // Carrega rotas do módulo "address"
-
-		// Endpoint para listar todas as rotas disponíveis
-		apiV1.GET("/endpoints", func(c *gin.Context) {
+		address.SetupAddressRoutes(v1)
+		v1.GET("/endpoints", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{
 				"available_endpoints": tracker.AvailableEndpoints,
 			})
 		})
 	}
 
-	r.GET("/swagger/*any", swagger.WrapHandler(files.Handler))
+	// Swagger UI route: Register this after all other routes
+	url := ginSwagger.URL("/swagger/doc.json") // Swagger endpoint
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
+
+	// Optional: Redirect root to Swagger
+	r.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+	})
 
 	return r
 }

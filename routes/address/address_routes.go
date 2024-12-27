@@ -1,3 +1,4 @@
+// urbverde-bff/routes/address/address_routes.go
 package address
 
 import (
@@ -34,5 +35,5 @@ func SetupAddressRoutes(rg *gin.RouterGroup) {
 	addressController := controllers.NewAddressController(addressService)
 
 	rg.GET("/address/suggestions", addressController.GetSuggestions)
-	tracker.AddEndpoint("GET", "/api/v1/address/suggestions", "Retorna sugestões de endereço")
+	tracker.AddEndpoint("GET", "/address/suggestions", "Retorna sugestões de endereço")
 }

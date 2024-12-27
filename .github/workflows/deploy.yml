@@ -24,11 +24,18 @@ jobs:
       run: |
         # Create a timestamp tag
         TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+
         # Build with both latest and timestamped tags
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest -t ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:$TIMESTAMP .
+        docker build \
+        --build-arg ENV=production \
+        -t ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest \
+        -t ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:$TIMESTAMP \
+        .        
+
         # Push both tags
         docker push ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest
         docker push ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:$TIMESTAMP
+
         # Save the timestamp for the deployment step
         echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
 
@@ -40,18 +47,19 @@ jobs:
         password: ${{ secrets.PRODUCTION_PASSWORD }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: |
+          # Go to our stack directory
           cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
           
-          # Save the previous version tag before updating
+          # If we have a record of a previous version, show it
           if [ -f "urbverde-bff-version.txt" ]; then
             PREV_VERSION=$(cat urbverde-bff-version.txt)
             echo "Previous version was: $PREV_VERSION"
           fi
           
-          # Store the new version
+          # Write the new version tag (from GitHub Actions) to a local file
           echo "${{ env.TIMESTAMP }}" > urbverde-bff-version.txt
           
-          # Clone or update repository
+          # Clone or update the urbverde-bff repo code
           if [ ! -d "urbverde-bff" ]; then
             git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git urbverde-bff
           else
@@ -61,6 +69,12 @@ jobs:
             cd ..
           fi
 
+          # Build the Docker image LOCALLY on the production server
+          docker build \
+            --build-arg ENV=production \
+            -t urbverde-bff:latest \
+            ./urbverde-bff
+            
           # Deploy new version
-          docker-compose pull urbverde-bff
+          # docker-compose pull urbverde-bff
           docker-compose up -d --no-deps --build urbverde-bff

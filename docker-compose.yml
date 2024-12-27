@@ -1,11 +1,17 @@
-# Docker Compose Local para Teste do Dockerfile
+# urbverde-bff/docker-compose.yml
 version: "3.8"
 
 services:
   urbverde-bff:
     build:
-      context: .  # O contexto aponta para o próprio diretório atual
+      context: .             # Build from current dir
+      args:
+        ENV: ${ENV}          # Pass the ENV build arg from .env file
     ports:
       - "8080:8080"
+    volumes:
+      - ./docs:/app/docs # Sync local `docs` folder with container's `/app/docs`
     environment:
-      - ENV=development
+      - ENV=${ENV}           # Optional: pass runtime ENV variable
+    env_file:
+      - .env

@@ -1,29 +1,41 @@
 FROM golang:1.23-alpine AS builder
 
-# Define o diretório de trabalho no container
+# Install tools and dependencies
+RUN apk add --no-cache git bash
+
+# Install swag CLI
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+
+# Set the environment argument (default: develop)
+ARG ENV=develop
+ENV ENV=${ENV}
+
+# Define the working directory in the container
 WORKDIR /app
 
-# Copia os arquivos go.mod e go.sum e instala as dependências
+# Copy the source code and dependencies
 COPY go.mod go.sum ./
 RUN go mod download
-
-# Copia o código-fonte para o diretório de trabalho
 COPY . .
 
-# Compila o binário da aplicação
+# Set the API host based on environment
+RUN if [ "$ENV" = "production" ]; then \
+      export API_HOST="api.urbverde.com.br"; \
+    else \
+      export API_HOST="localhost:8080"; \
+    fi && \
+    # Update the host in main.go before generating Swagger docs
+    sed -i "s|@host.*|@host ${API_HOST}|" main.go && \
+    # Generate Swagger docs
+    swag init --g main.go --output docs
+
+# Build the application binary
 RUN go build -o urbverde-bff
 
-# Etapa de execução
+# Start a minimal runtime image
 FROM alpine:latest
-
-# Define o diretório de trabalho
 WORKDIR /app
-
-# Copia o binário compilado da etapa anterior
 COPY --from=builder /app/urbverde-bff .
-
-# Exponha a porta que a aplicação usa
+COPY --from=builder /app/docs ./docs
 EXPOSE 8080
-
-# Comando para rodar a aplicação
 CMD ["./urbverde-bff"]
