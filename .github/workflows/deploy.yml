@@ -50,14 +50,14 @@ jobs:
           # Go to our stack directory
           cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
           
+          # Record deployment version
+          echo "$TIMESTAMP" > urbverde-bff-version.txt
+
           # If we have a record of a previous version, show it
           if [ -f "urbverde-bff-version.txt" ]; then
             PREV_VERSION=$(cat urbverde-bff-version.txt)
             echo "Previous version was: $PREV_VERSION"
           fi
-          
-          # Write the new version tag (from GitHub Actions) to a local file
-            echo "$TIMESTAMP" > urbverde-bff-version.txt
           
           # Clone or update the urbverde-bff repo code
           if [ ! -d "urbverde-bff" ]; then
@@ -69,12 +69,18 @@ jobs:
             cd ..
           fi
 
-          # Build the Docker image LOCALLY on the production server
+          # Create or update production .env file
+          echo "ENV=production" > ./urbverde-bff/.env
+
+          # Build and deploy
+          cd urbverde-bff
           docker build \
             --build-arg ENV=production \
             -t urbverde-bff:latest \
-            ./urbverde-bff
+            .
+          cd ..
             
-          # Deploy new version
+          # Deploy new version using docker-compose
+          ENV=production docker-compose up -d --no-deps --build urbverde-bff
+
           # docker-compose pull urbverde-bff
-          docker-compose up -d --no-deps --build urbverde-bff
