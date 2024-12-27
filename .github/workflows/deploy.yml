@@ -70,7 +70,17 @@ jobs:
           fi
 
           # Create or update production .env file
-          echo "ENV=production" > ./urbverde-bff/.env
+          # Update ENV in .env file without removing other variables
+          if [ -f ./urbverde-bff/.env ]; then
+            # Remove any existing ENV line
+            sed -i '/^ENV=/d' ./urbverde-bff/.env
+            # Add new ENV line
+            echo "ENV=production" >> ./urbverde-bff/.env
+          else
+            # Create new .env if it doesn't exist
+            echo "ENV=production" > ./urbverde-bff/.env
+            echo "IBGE_API_URL=https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=" >> ./urbverde-bff/.env
+          fi
 
           # Build and deploy
           cd urbverde-bff
