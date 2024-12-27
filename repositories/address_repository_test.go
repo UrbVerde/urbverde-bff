@@ -23,7 +23,7 @@ func TestSearchAddress(t *testing.T) {
 		}))
 		defer server.Close()
 
-		os.Setenv("IBGE_API_URL", server.URL+"?nome=")
+		os.Setenv("IBGE_API_URL", server.URL)
 
 		repo := NewExternalAddressRepository()
 		results, err := repo.SearchAddress("São")
