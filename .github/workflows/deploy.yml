@@ -57,7 +57,7 @@ jobs:
           fi
           
           # Write the new version tag (from GitHub Actions) to a local file
-          echo "${{ env.TIMESTAMP }}" > urbverde-bff-version.txt
+            echo "$TIMESTAMP" > urbverde-bff-version.txt
           
           # Clone or update the urbverde-bff repo code
           if [ ! -d "urbverde-bff" ]; then

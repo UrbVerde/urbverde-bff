@@ -1,17 +1,16 @@
-# urbverde-bff/docker-compose.yml
 version: "3.8"
 
 services:
   urbverde-bff:
     build:
-      context: .             # Build from current dir
+      context: .
       args:
-        ENV: ${ENV}          # Pass the ENV build arg from .env file
+        ENV: ${ENV:-develop}
     ports:
       - "8080:8080"
     volumes:
-      - ./docs:/app/docs # Sync local `docs` folder with container's `/app/docs`
+      - ./docs:/app/docs:rw  # Added :rw flag to ensure read-write permissions
     environment:
-      - ENV=${ENV}           # Optional: pass runtime ENV variable
+      - ENV=${ENV:-develop}
     env_file:
       - .env

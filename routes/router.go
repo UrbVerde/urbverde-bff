@@ -1,8 +1,9 @@
+// urbverde-bff/routes/router.go
 package routes
 
 import (
 	"net/http"
-	_ "urbverde-api/docs"
+	// _ "urbverde-api/docs"
 	"urbverde-api/routes/address"
 	"urbverde-api/routes/tracker"
 
