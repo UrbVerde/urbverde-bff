@@ -1,11 +1,13 @@
 package routes
 
 import (
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"urbverde-api/routes/address"
+	"urbverde-api/routes/cards"
 	"urbverde-api/routes/tracker"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 func SetupRouter() *gin.Engine {
@@ -25,6 +27,7 @@ func SetupRouter() *gin.Engine {
 	apiV1 := r.Group("/api/v1")
 	{
 		address.SetupAddressRoutes(apiV1) // Carrega rotas do módulo "address"
+		cards.SetupCardsRoutes(apiV1)
 
 		// Endpoint para listar todas as rotas disponíveis
 		apiV1.GET("/endpoints", func(c *gin.Context) {
