@@ -1,11 +1,16 @@
-# Docker Compose Local para Teste do Dockerfile
 version: "3.8"
 
 services:
   urbverde-bff:
     build:
-      context: .  # O contexto aponta para o próprio diretório atual
+      context: .
+      args:
+        ENV: ${ENV:-develop}
     ports:
       - "8080:8080"
+    volumes:
+      - ./docs:/app/docs:rw  # Added :rw flag to ensure read-write permissions
     environment:
-      - ENV=development
+      - ENV=${ENV:-develop}
+    env_file:
+      - .env

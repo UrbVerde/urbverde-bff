@@ -1,3 +1,4 @@
+// urbverde-bff/repositories/address_repository.go
 package repositories
 
 import (
@@ -43,7 +44,7 @@ func NewExternalAddressRepository() AddressRepository {
 }
 
 func (r *externalAddressRepository) SearchAddress(query string) ([]string, error) {
-	url := r.apiURL + query
+	url := r.apiURL
 
 	resp, err := http.Get(url)
 	if err != nil {

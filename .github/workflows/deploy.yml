@@ -1,3 +1,4 @@
+# urbverde-bff/.github/workflows/deploy.yml
 name: Deploy to Production
 
 on:
@@ -21,9 +22,23 @@ jobs:
 
     - name: Build and Push Docker Image
       run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest .
+        # Create a timestamp tag
+        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+
+        # Build with both latest and timestamped tags
+        docker build \
+        --build-arg ENV=production \
+        -t ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest \
+        -t ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:$TIMESTAMP \
+        .        
+
+        # Push both tags
         docker push ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest
-        
+        docker push ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:$TIMESTAMP
+
+        # Save the timestamp for the deployment step
+        echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+
     - name: Deploy to Production Server
       uses: appleboy/ssh-action@v0.1.7
       with:
@@ -32,24 +47,50 @@ jobs:
         password: ${{ secrets.PRODUCTION_PASSWORD }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: |
-        
+          # Go to our stack directory
           cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
-          # If the 'urbverde-bff' directory does not exist, clone the repository
+          
+          # Record deployment version
+          echo "$TIMESTAMP" > urbverde-bff-version.txt
+
+          # If we have a record of a previous version, show it
+          if [ -f "urbverde-bff-version.txt" ]; then
+            PREV_VERSION=$(cat urbverde-bff-version.txt)
+            echo "Previous version was: $PREV_VERSION"
+          fi
+          
+          # Clone or update the urbverde-bff repo code
           if [ ! -d "urbverde-bff" ]; then
-            echo "Cloning urbverde-bff repository..."
             git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git urbverde-bff
-            if [ $? -ne 0 ]; then
-              echo "Failed to clone urbverde-bff repository. Exiting."
-              exit 1
-            fi
           else
-            echo "urbverde-bff already exists. Pulling latest changes..."
             cd urbverde-bff
             git fetch origin main
             git reset --hard origin/main
             cd ..
           fi
 
-          # Build the Docker image and restart the service
-          docker-compose pull urbverde-bff || true
-          docker-compose up -d --no-deps --build urbverde-bff
+          # Create or update production .env file
+          # Update ENV in .env file without removing other variables
+          if [ -f ./urbverde-bff/.env ]; then
+            # Remove any existing ENV line
+            sed -i '/^ENV=/d' ./urbverde-bff/.env
+            # Add new ENV line
+            echo "ENV=production" >> ./urbverde-bff/.env
+          else
+            # Create new .env if it doesn't exist
+            echo "ENV=production" > ./urbverde-bff/.env
+            echo "IBGE_API_URL=https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=" >> ./urbverde-bff/.env
+          fi
+
+          # Build and deploy
+          cd urbverde-bff
+          docker build \
+            --build-arg ENV=production \
+            -t urbverde-bff:latest \
+            .
+          cd ..
+            
+          # Deploy new version using docker-compose
+          ENV=production docker-compose up -d --no-deps --build urbverde-bff
+
+          # docker-compose pull urbverde-bff
