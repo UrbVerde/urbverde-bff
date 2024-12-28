@@ -1,18 +1,18 @@
-package controllers
+package controllers_cards_weather
 
 import (
 	"fmt"
 	"net/http"
-	"urbverde-api/services"
+	services_cards_weather "urbverde-api/services/cards/weather"
 
 	"github.com/gin-gonic/gin"
 )
 
 type WeatherTemperatureController struct {
-	WeatherTemperatureService services.WeatherTemperatureService
+	WeatherTemperatureService services_cards_weather.WeatherTemperatureService
 }
 
-func NewWeatherTemperatureController(service services.WeatherTemperatureService) *WeatherTemperatureController {
+func NewWeatherTemperatureController(service services_cards_weather.WeatherTemperatureService) *WeatherTemperatureController {
 	return &WeatherTemperatureController{
 		WeatherTemperatureService: service,
 	}

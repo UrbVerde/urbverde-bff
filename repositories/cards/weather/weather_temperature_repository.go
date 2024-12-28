@@ -1,4 +1,4 @@
-package repositories
+package repositories_cards_weather
 
 import (
 	"encoding/json"
