@@ -103,6 +103,35 @@ func (r *externalWeatherTemperatureRepository) LoadYears(city string) ([]int, er
 	return years, nil
 }
 
+// Result
+// Nível de ilha de calor
+// Temperatura média da superfície
+// Maior amplitude
+// Temperatura máxima da superfície
+
+var sub_ilha_calor string = " da média nacional de "
+var sub_temp_media string = " da média nacional de "
+var sub_amplitude string = "É a diferença entre a temperatura mais quente e a mais fria"
+
+func auxLoadSubtitles(value int, avg int, subtitle *string) {
+	if subtitle == nil {
+		return
+	}
+
+	if value < avg {
+		*subtitle = "Abaixo" + *subtitle + strconv.Itoa(avg)
+	} else if value > avg {
+		*subtitle = "Acima" + *subtitle + strconv.Itoa(avg)
+	} else {
+		*subtitle = "Está na média nacional de " + strconv.Itoa(avg)
+	}
+}
+
+func tempLoadData(v1 int, v2 int) {
+	auxLoadSubtitles(v1, 0, &sub_ilha_calor)
+	auxLoadSubtitles(v2, 0, &sub_temp_media)
+}
+
 // LoadData retrieves weather data for a specific year
 func (r *externalWeatherTemperatureRepository) LoadData(city string, year string) ([]DataItem, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
@@ -131,13 +160,20 @@ func (r *externalWeatherTemperatureRepository) LoadData(city string, year string
 		return nil, fmt.Errorf("ano %d não encontrado nos dados", convYear)
 	}
 
-	subtitle := "É a diferença entre a temperatura mais quente e a mais fria"
+	// Values
+	v_ilha_calor := int(math.Round(filtered.Properties.C1))
+	v_tempe_media := int(math.Round(filtered.Properties.C2))
+	v_amplitude := filtered.Properties.H5b
+	v_tempe_max := int(math.Round(filtered.Properties.C3))
+
+	tempLoadData(v_ilha_calor, v_tempe_media)
+	// fmt.Println(filtered.Properties.C1) conferir como vai ficar o arredondamento disso aqui
 
 	result := []DataItem{
-		{"Nível de ilha de calor", nil, strconv.Itoa(int(math.Round(filtered.Properties.C1)))},
-		{"Temperatura média da superfície", nil, strconv.Itoa(int(math.Round(filtered.Properties.C2))) + "°C"},
-		{"Maior amplitude", &subtitle, strconv.Itoa(filtered.Properties.H5b) + "°C"},
-		{"Temperatura máxima da superfície", nil, strconv.Itoa(int(math.Round(filtered.Properties.C3))) + "°C"},
+		{"Nível de ilha de calor", &sub_ilha_calor, strconv.Itoa(v_ilha_calor)},
+		{"Temperatura média da superfície", &sub_temp_media, strconv.Itoa(v_tempe_media) + "°C"},
+		{"Maior amplitude", &sub_amplitude, strconv.Itoa(v_amplitude) + "°C"},
+		{"Temperatura máxima da superfície", nil, strconv.Itoa(v_tempe_max) + "°C"},
 	}
 
 	return result, nil
