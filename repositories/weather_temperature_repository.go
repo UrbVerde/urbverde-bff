@@ -3,6 +3,7 @@ package repositories
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"sort"
@@ -35,9 +36,9 @@ type Properties struct {
 
 // Response JSON structure
 type DataItem struct {
-	Type  string   `json:"type"`
-	Value float64  `json:"value"`
-	Avg   *float64 `json:"avg,omitempty"` // Omitir caso seja nil
+	Title    string  `json:"title"`
+	Subtitle *string `json:"subtitle,omitempty"` // Omitir caso seja nil
+	Value    string  `json:"value"`
 }
 
 type externalWeatherTemperatureRepository struct {
@@ -130,11 +131,13 @@ func (r *externalWeatherTemperatureRepository) LoadData(city string, year string
 		return nil, fmt.Errorf("ano %d não encontrado nos dados", convYear)
 	}
 
+	subtitle := "É a diferença entre a temperatura mais quente e a mais fria"
+
 	result := []DataItem{
-		{"nivel ilha", filtered.Properties.C1, nil},
-		{"temperatura media", filtered.Properties.C2, nil},
-		{"amplitude", float64(filtered.Properties.H5b), nil},
-		{"temperatura maxima", filtered.Properties.C3, nil},
+		{"Nível de ilha de calor", nil, strconv.Itoa(int(math.Round(filtered.Properties.C1)))},
+		{"Temperatura média da superfície", nil, strconv.Itoa(int(math.Round(filtered.Properties.C2))) + "°C"},
+		{"Maior amplitude", &subtitle, strconv.Itoa(filtered.Properties.H5b) + "°C"},
+		{"Temperatura máxima da superfície", nil, strconv.Itoa(int(math.Round(filtered.Properties.C3))) + "°C"},
 	}
 
 	return result, nil
