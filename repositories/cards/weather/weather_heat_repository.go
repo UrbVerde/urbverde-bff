@@ -130,16 +130,16 @@ func (r *externalWeatherHeatRepository) LoadHeatData(city string, year string) (
 	heatProps := filtered.Properties.(HeatProperties)
 
 	// Values
-	v_negros_indigenas := int(math.Round(heatProps.H12b * 100))
-	v_mulheres := int(math.Round(heatProps.H11b * 100))
-	v_criancas := int(math.Round(heatProps.H10b * 100))
-	v_idosos := int(math.Round(heatProps.H9b * 100))
+	black_indigenous_percentage := int(math.Round(heatProps.H12b * 100))
+	women_percentage := int(math.Round(heatProps.H11b * 100))
+	children_percentage := int(math.Round(heatProps.H10b * 100))
+	senior_percentage := int(math.Round(heatProps.H9b * 100))
 
 	result := []HeatDataItem{
-		{"Negros e indígenas afetados", &subtitle, strconv.Itoa(v_negros_indigenas) + "%"},
-		{"Mulheres afetadas", &subtitle, strconv.Itoa(v_mulheres) + "%"},
-		{"Crianças afetadas", &subtitle, strconv.Itoa(v_criancas) + "%"},
-		{"Idosos afetados", &subtitle, strconv.Itoa(v_idosos) + "%"},
+		{"Negros e indígenas afetados", &subtitle, strconv.Itoa(black_indigenous_percentage) + "%"},
+		{"Mulheres afetadas", &subtitle, strconv.Itoa(women_percentage) + "%"},
+		{"Crianças afetadas", &subtitle, strconv.Itoa(children_percentage) + "%"},
+		{"Idosos afetados", &subtitle, strconv.Itoa(senior_percentage) + "%"},
 	}
 
 	return result, nil

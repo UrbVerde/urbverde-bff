@@ -1,7 +1,6 @@
 package controllers_cards_weather
 
 import (
-	"fmt"
 	"net/http"
 	services_cards_weather "urbverde-api/services/cards/weather"
 
@@ -21,7 +20,6 @@ func NewWeatherHeatController(service services_cards_weather.WeatherHeatService)
 func (ac *WeatherHeatController) LoadHeatData(c *gin.Context) {
 	city := c.Query("city")
 	year := c.Query("year")
-	fmt.Println(city, year)
 
 	if year != "" {
 		data, err := ac.WeatherHeatService.LoadHeatData(city, year)
