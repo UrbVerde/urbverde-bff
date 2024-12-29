@@ -1,32 +1,23 @@
 package repositories_cards_weather
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
-	"net/http"
 	"os"
 	"sort"
 	"strconv"
+	cards_shared "urbverde-api/repositories/cards"
 
 	"github.com/joho/godotenv"
 )
 
 type WeatherTemperatureRepository interface {
-	LoadYears(city string) ([]int, error)
-	LoadData(city string, year string) ([]DataItem, error)
+	cards_shared.RepositoryBase
+	LoadTemperatureData(city string, year string) ([]TemperatureDataItem, error)
 }
 
-// Geoserver JSON structure
-type FeatureCollection struct {
-	Features []Feature `json:"features"`
-}
-
-type Feature struct {
-	Properties Properties `json:"properties"`
-}
-
-type Properties struct {
+// Defina as propriedades específicas para este repositório
+type TemperatureProperties struct {
 	Ano int     `json:"ano"`
 	C1  float64 `json:"c1"`  // Nível de Ilha de Calor
 	H5b int     `json:"h5b"` // Amplitude
@@ -35,7 +26,7 @@ type Properties struct {
 }
 
 // Response JSON structure
-type DataItem struct {
+type TemperatureDataItem struct {
 	Title    string  `json:"title"`
 	Subtitle *string `json:"subtitle,omitempty"` // Omitir caso seja nil
 	Value    string  `json:"value"`
@@ -59,38 +50,29 @@ func NewExternalWeatherTemperatureRepository() WeatherTemperatureRepository {
 	}
 }
 
-// Helper function for HTTP GET requests
-func fetchFromURL(url string) (*FeatureCollection, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("erro ao fazer a requisição: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("erro na requisição. Código de status: %d", resp.StatusCode)
-	}
-
-	var data FeatureCollection
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil, fmt.Errorf("erro ao decodificar a resposta: %w", err)
-	}
-
-	return &data, nil
-}
-
 // LoadYears retrieves all unique years from the data
 func (r *externalWeatherTemperatureRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
-	data, err := fetchFromURL(url)
+	data, err := cards_shared.FetchFromURL(url)
 	if err != nil {
 		return nil, err
 	}
 
 	yearsMap := make(map[int]bool)
 	for _, feature := range data.Features {
-		yearsMap[feature.Properties.Ano] = true
+		// Realiza o cast para as propriedades específicas
+		props, ok := feature.Properties.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("tipo inesperado de propriedades")
+		}
+
+		var temperatureProps TemperatureProperties
+		if err := cards_shared.MapToStruct(props, &temperatureProps); err != nil {
+			return nil, err
+		}
+
+		yearsMap[temperatureProps.Ano] = true
 	}
 
 	var years []int
@@ -132,11 +114,11 @@ func tempLoadData(v1 int, v2 int) {
 	auxLoadSubtitles(v2, 0, &sub_temp_media)
 }
 
-// LoadData retrieves weather data for a specific year
-func (r *externalWeatherTemperatureRepository) LoadData(city string, year string) ([]DataItem, error) {
+// LoadData retrieves weather temperature data for a specific year
+func (r *externalWeatherTemperatureRepository) LoadTemperatureData(city string, year string) ([]TemperatureDataItem, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
-	data, err := fetchFromURL(url)
+	data, err := cards_shared.FetchFromURL(url)
 	if err != nil {
 		return nil, err
 	}
@@ -146,11 +128,22 @@ func (r *externalWeatherTemperatureRepository) LoadData(city string, year string
 		return nil, fmt.Errorf("ano inválido: %w", err)
 	}
 
-	var filtered Feature
+	var filtered cards_shared.Feature
 	found := false
 	for _, feature := range data.Features {
-		if feature.Properties.Ano == convYear {
+		props, ok := feature.Properties.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("tipo inesperado de propriedades")
+		}
+
+		var temperatureProps TemperatureProperties
+		if err := cards_shared.MapToStruct(props, &temperatureProps); err != nil {
+			return nil, err
+		}
+
+		if temperatureProps.Ano == convYear {
 			filtered = feature
+			filtered.Properties = temperatureProps
 			found = true
 			break
 		}
@@ -160,16 +153,18 @@ func (r *externalWeatherTemperatureRepository) LoadData(city string, year string
 		return nil, fmt.Errorf("ano %d não encontrado nos dados", convYear)
 	}
 
+	// Cast para TemperatureProperties
+	temperatureProps := filtered.Properties.(TemperatureProperties)
+
 	// Values
-	v_ilha_calor := int(math.Round(filtered.Properties.C1))
-	v_tempe_media := int(math.Round(filtered.Properties.C2))
-	v_amplitude := filtered.Properties.H5b
-	v_tempe_max := int(math.Round(filtered.Properties.C3))
+	v_ilha_calor := int(math.Round(temperatureProps.C1))
+	v_tempe_media := int(math.Round(temperatureProps.C2))
+	v_amplitude := temperatureProps.H5b
+	v_tempe_max := int(math.Round(temperatureProps.C3))
 
 	tempLoadData(v_ilha_calor, v_tempe_media)
-	// fmt.Println(filtered.Properties.C1) conferir como vai ficar o arredondamento disso aqui
 
-	result := []DataItem{
+	result := []TemperatureDataItem{
 		{"Nível de ilha de calor", &sub_ilha_calor, strconv.Itoa(v_ilha_calor)},
 		{"Temperatura média da superfície", &sub_temp_media, strconv.Itoa(v_tempe_media) + "°C"},
 		{"Maior amplitude", &sub_amplitude, strconv.Itoa(v_amplitude) + "°C"},

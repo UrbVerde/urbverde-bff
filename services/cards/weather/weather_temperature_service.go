@@ -1,12 +1,13 @@
 package services_cards_weather
 
 import (
+	cards_shared "urbverde-api/repositories/cards"
 	repositories_cards_weather "urbverde-api/repositories/cards/weather"
 )
 
 type WeatherTemperatureService interface {
-	LoadYears(city string) ([]int, error)
-	LoadData(city string, year string) ([]repositories_cards_weather.DataItem, error)
+	cards_shared.RepositoryBase
+	LoadTemperatureData(city string, year string) ([]repositories_cards_weather.TemperatureDataItem, error)
 }
 
 type weatherTemperatureService struct {
@@ -28,8 +29,8 @@ func (as *weatherTemperatureService) LoadYears(city string) ([]int, error) {
 	return data, nil
 }
 
-func (as *weatherTemperatureService) LoadData(city string, year string) ([]repositories_cards_weather.DataItem, error) {
-	data, err := as.WeatherTemperatureRepository.LoadData(city, year)
+func (as *weatherTemperatureService) LoadTemperatureData(city string, year string) ([]repositories_cards_weather.TemperatureDataItem, error) {
+	data, err := as.WeatherTemperatureRepository.LoadTemperatureData(city, year)
 	if err != nil {
 		return nil, err
 	}

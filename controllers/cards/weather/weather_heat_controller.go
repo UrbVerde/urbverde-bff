@@ -8,23 +8,23 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type WeatherTemperatureController struct {
-	WeatherTemperatureService services_cards_weather.WeatherTemperatureService
+type WeatherHeatController struct {
+	WeatherHeatService services_cards_weather.WeatherHeatService
 }
 
-func NewWeatherTemperatureController(service services_cards_weather.WeatherTemperatureService) *WeatherTemperatureController {
-	return &WeatherTemperatureController{
-		WeatherTemperatureService: service,
+func NewWeatherHeatController(service services_cards_weather.WeatherHeatService) *WeatherHeatController {
+	return &WeatherHeatController{
+		WeatherHeatService: service,
 	}
 }
 
-func (ac *WeatherTemperatureController) LoadTemperatureData(c *gin.Context) {
+func (ac *WeatherHeatController) LoadHeatData(c *gin.Context) {
 	city := c.Query("city")
 	year := c.Query("year")
 	fmt.Println(city, year)
 
 	if year != "" {
-		data, err := ac.WeatherTemperatureService.LoadTemperatureData(city, year)
+		data, err := ac.WeatherHeatService.LoadHeatData(city, year)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "Erro ao buscar dados de temperatura",
@@ -35,7 +35,7 @@ func (ac *WeatherTemperatureController) LoadTemperatureData(c *gin.Context) {
 
 		c.JSON(http.StatusOK, data)
 	} else {
-		data, err := ac.WeatherTemperatureService.LoadYears(city)
+		data, err := ac.WeatherHeatService.LoadYears(city)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "Erro ao buscar anos disponíveis de temperatura",
