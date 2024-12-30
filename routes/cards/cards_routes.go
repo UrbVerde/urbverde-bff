@@ -10,7 +10,7 @@ import (
 
 type CardsDataItem struct {
 	Title    string  `json:"title" example:"Nível de ilha de calor"`
-	Subtitle *string `json:"subtitle,omitempty" example:"Abaixo da média nacional"`
+	Subtitle *string `json:"subtitle,omitempty" example:"Abaixo da média nacional de 0"`
 	Value    string  `json:"value" example:"25°C"`
 }
 

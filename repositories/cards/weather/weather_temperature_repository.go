@@ -85,16 +85,6 @@ func (r *externalWeatherTemperatureRepository) LoadYears(city string) ([]int, er
 	return years, nil
 }
 
-// Result
-// Nível de ilha de calor
-// Temperatura média da superfície
-// Maior amplitude
-// Temperatura máxima da superfície
-
-var heat_island_subtitle string = " da média nacional de "
-var avg_temp_subtitle string = " da média nacional de "
-var amplitude_subtitle string = "É a diferença entre a temperatura mais quente e a mais fria"
-
 func auxLoadSubtitles(value int, avg int, subtitle *string) {
 	if subtitle == nil {
 		return
@@ -109,9 +99,9 @@ func auxLoadSubtitles(value int, avg int, subtitle *string) {
 	}
 }
 
-func tempLoadData(v1 int, v2 int) {
-	auxLoadSubtitles(v1, 0, &heat_island_subtitle)
-	auxLoadSubtitles(v2, 0, &avg_temp_subtitle)
+func tempLoadData(v1 int, v2 int, sub1 *string, sub2 *string) {
+	auxLoadSubtitles(v1, 0, sub1)
+	auxLoadSubtitles(v2, 0, sub2)
 }
 
 // LoadData retrieves weather temperature data for a specific year
@@ -162,7 +152,17 @@ func (r *externalWeatherTemperatureRepository) LoadTemperatureData(city string, 
 	amplitude_value := temperatureProps.H5b
 	max_temp_value := int(math.Round(temperatureProps.C3))
 
-	tempLoadData(heat_island_value, avg_temp_value)
+	// Result
+	// Nível de ilha de calor
+	// Temperatura média da superfície
+	// Maior amplitude
+	// Temperatura máxima da superfície
+
+	var heat_island_subtitle string = " da média nacional de "
+	var avg_temp_subtitle string = " da média nacional de "
+	var amplitude_subtitle string = "É a diferença entre a temperatura mais quente e a mais fria"
+
+	tempLoadData(heat_island_value, avg_temp_value, &heat_island_subtitle, &avg_temp_subtitle)
 
 	result := []TemperatureDataItem{
 		{"Nível de ilha de calor", &heat_island_subtitle, strconv.Itoa(heat_island_value)},
