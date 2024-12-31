@@ -6,22 +6,22 @@ import (
 )
 
 type AddressService interface {
-	GetSuggestions(query string) ([]string, error)
+	GetSuggestions(query string) ([]repositories.CityResponse, error)
 }
 
 type addressService struct {
 	AddressRepository repositories.AddressRepository
 }
 
-// Função para criar um novo serviço de endereço.
+// NewAddressService creates a new address service instance
 func NewAddressService(ar repositories.AddressRepository) AddressService {
 	return &addressService{
 		AddressRepository: ar,
 	}
 }
 
-// Função que chama o repositório para buscar as sugestões de endereços.
-func (as *addressService) GetSuggestions(query string) ([]string, error) {
+// GetSuggestions retrieves address suggestions based on the query
+func (as *addressService) GetSuggestions(query string) ([]repositories.CityResponse, error) {
 	suggestions, err := as.AddressRepository.SearchAddress(query)
 	if err != nil {
 		return nil, err

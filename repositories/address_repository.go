@@ -12,18 +12,26 @@ import (
 )
 
 type AddressRepository interface {
-	SearchAddress(query string) ([]string, error)
+	SearchAddress(query string) ([]CityResponse, error)
 }
 
+// IBGEResponse represents the raw response from IBGE API
 type IBGEResponse struct {
-	Nome         string `json:"nome"`
+	ID           int    `json:"id"`   // City ID (cd_mun)
+	Nome         string `json:"nome"` // City name
 	Microrregiao struct {
 		Mesorregiao struct {
 			UF struct {
-				Sigla string `json:"sigla"`
+				Sigla string `json:"sigla"` // State abbreviation
 			} `json:"UF"`
 		} `json:"mesorregiao"`
 	} `json:"microrregiao"`
+}
+
+// CityResponse represents our formatted response
+type CityResponse struct {
+	DisplayName string `json:"display_name"` // What user sees: "City Name - ST"
+	CdMun       int    `json:"cd_mun"`       // City ID for internal use
 }
 
 type externalAddressRepository struct {
@@ -35,7 +43,7 @@ func NewExternalAddressRepository() AddressRepository {
 
 	apiURL := os.Getenv("IBGE_API_URL")
 	if apiURL == "" {
-		panic("A variável de ambiente IBGE_API_URL não está definida")
+		panic("IBGE_API_URL environment variable not set")
 	}
 
 	return &externalAddressRepository{
@@ -43,32 +51,35 @@ func NewExternalAddressRepository() AddressRepository {
 	}
 }
 
-func (r *externalAddressRepository) SearchAddress(query string) ([]string, error) {
+func (r *externalAddressRepository) SearchAddress(query string) ([]CityResponse, error) {
 	url := r.apiURL
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("erro ao fazer a requisição: %w", err)
+		return nil, fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("erro na requisição. Código de status: %d", resp.StatusCode)
+		return nil, fmt.Errorf("request failed with status: %d", resp.StatusCode)
 	}
 
 	var cities []IBGEResponse
 	if err := json.NewDecoder(resp.Body).Decode(&cities); err != nil {
-		return nil, fmt.Errorf("erro ao decodificar a resposta: %w", err)
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	var cityNames []string
+	var cityResponses []CityResponse
 	qL := strings.ToLower(query)
 	for _, city := range cities {
 		cityName := strings.ToLower(city.Nome)
 		if strings.HasPrefix(cityName, qL) {
-			cityNames = append(cityNames, fmt.Sprintf("%s - %s", city.Nome, city.Microrregiao.Mesorregiao.UF.Sigla))
+			cityResponses = append(cityResponses, CityResponse{
+				DisplayName: fmt.Sprintf("%s - %s", city.Nome, city.Microrregiao.Mesorregiao.UF.Sigla),
+				CdMun:       city.ID,
+			})
 		}
 	}
 
-	return cityNames, nil
+	return cityResponses, nil
 }
