@@ -16,7 +16,6 @@ type WeatherHeatRepository interface {
 	LoadHeatData(city string, year string) ([]HeatDataItem, error)
 }
 
-// Defina as propriedades específicas para este repositório
 type HeatProperties struct {
 	Ano  int     `json:"ano"`
 	H12b float64 `json:"h12b"` // Negros e indígenas
@@ -40,10 +39,19 @@ type externalWeatherHeatRepository struct {
 func NewExternalWeatherHeatRepository() WeatherHeatRepository {
 	_ = godotenv.Load()
 
-	geoserverURL := os.Getenv("GEOSERVER_WEATHER_URL")
+	geoserverURL := os.Getenv("GEOSERVER_URL")
 	if geoserverURL == "" {
-		panic("A variável de ambiente GEOSERVER_WEATHER_URL não está definida")
+		panic("A variável de ambiente GEOSERVER_URL não está definida")
 	}
+
+	geoserverURL = fmt.Sprintf("%sows?service=%s&version=%s&request=%s&typeName=%s&%s",
+		geoserverURL,
+		cards_shared.WfsService,
+		cards_shared.WfsVersion,
+		cards_shared.WfsRequest,
+		cards_shared.TypeName+"dados_temperatura_por_municipio",
+		cards_shared.CqlFilterPrefix,
+	)
 
 	return &externalWeatherHeatRepository{
 		geoserverURL: geoserverURL,

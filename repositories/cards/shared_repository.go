@@ -6,6 +6,14 @@ import (
 	"net/http"
 )
 
+const (
+	WfsService      = "WFS"
+	WfsVersion      = "1.0.0"
+	WfsRequest      = "GetFeature"
+	TypeName        = "urbverde:"
+	CqlFilterPrefix = "CQL_FILTER=cd_mun="
+)
+
 type RepositoryBase interface {
 	LoadYears(city string) ([]int, error)
 }
