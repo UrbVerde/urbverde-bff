@@ -30,6 +30,22 @@ func TestSearchAddress(t *testing.T) {
 		results, err := repo.SearchAddress("São")
 
 		assert.NoError(t, err)
-		assert.Equal(t, []string{"São Paulo - SP", "São Pedro - SP"}, results)
+
+		expected := []CityResponse{
+			{DisplayName: "São Paulo - SP", CdMun: 3550308},
+			{DisplayName: "São Pedro - SP", CdMun: 3550407},
+		}
+
+		var actualStrings []string
+		for _, result := range results {
+			actualStrings = append(actualStrings, result.DisplayName)
+		}
+
+		var expectedStrings []string
+		for _, city := range expected {
+			expectedStrings = append(expectedStrings, city.DisplayName)
+		}
+
+		assert.Equal(t, expectedStrings, actualStrings)
 	})
 }

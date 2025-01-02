@@ -5,6 +5,7 @@ import (
 	"net/http"
 	_ "urbverde-api/docs"
 	"urbverde-api/routes/address"
+	"urbverde-api/routes/cards"
 	"urbverde-api/routes/tracker"
 
 	"github.com/gin-contrib/cors"
@@ -28,6 +29,7 @@ func SetupRouter() *gin.Engine {
 	// API routes under /v1
 	v1 := r.Group("/v1")
 	{
+		cards.SetupCardsRoutes(v1)
 		address.SetupAddressRoutes(v1)
 		v1.GET("/endpoints", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{

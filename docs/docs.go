@@ -55,6 +55,100 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/cards/weather/heat": {
+            "get": {
+                "description": "Retorna os dados de calor extremo para o município e ano fornecidos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards"
+                ],
+                "summary": "Retorna dados de calor extremo",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ano dos dados",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/weather/temperature": {
+            "get": {
+                "description": "Retorna os dados de temperatura para o município e ano fornecidos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards"
+                ],
+                "summary": "Retorna dados de temperatura",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ano dos dados",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -77,6 +171,36 @@ const docTemplate = `{
                 },
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "cards.CardsDataItem": {
+            "type": "object",
+            "properties": {
+                "subtitle": {
+                    "type": "string",
+                    "example": "Abaixo da média nacional"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Nível de ilha de calor"
+                },
+                "value": {
+                    "type": "string",
+                    "example": "25°C"
+                }
+            }
+        },
+        "cards.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Erro ao processar a solicitação"
                 }
             }
         }
