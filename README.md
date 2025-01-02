@@ -39,13 +39,18 @@ API desenvolvida em Go para fornecer sugestões de endereço e outros serviços 
    docker-compose up --build
    ```
 
+3. Para testar o swagger com a api online use:
+   ```bash
+   ENV=production docker-compose build && docker-compose up -d 
+   ```
+
 5. A API estará acessível em `http://localhost:8080/`.
 
 ## Rotas Disponíveis
 
 Você pode listar os endpoints em: http://localhost:8080/api/v1/endpoints .
 
-Eles também estão disponíveis no servidor de produção em: https://urbverde.iau.usp.br/api/v1/endpoints
+Eles também estão disponíveis no servidor de produção em: https://api.urbverde.com.br/v1/endpoints
 
 - `GET /v1/address/suggestions`: Retorna sugestões de endereços.
 - ⚙️ **[em desenvolvimento]** `GET /v1/city/bounds`: Retorna os dados de localização e código do município.
