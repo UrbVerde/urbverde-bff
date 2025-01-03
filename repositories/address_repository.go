@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -80,6 +81,10 @@ func (r *externalAddressRepository) SearchAddress(query string) ([]CityResponse,
 			})
 		}
 	}
+	// Sort cityResponses alphabetically by DisplayName
+	sort.Slice(cityResponses, func(i, j int) bool {
+		return cityResponses[i].DisplayName < cityResponses[j].DisplayName
+	})
 
 	return cityResponses, nil
 }
