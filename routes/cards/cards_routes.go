@@ -14,6 +14,18 @@ type CardsDataItem struct {
 	Value    string  `json:"value" example:"25°C"`
 }
 
+type RankingDataItem struct {
+	Type   string `json:"type"`
+	Number int    `json:"number"`
+	Of     int    `json:"of"`
+}
+
+type RankingData struct {
+	Title    string            `json:"title" example:"Municipios do Estado"`
+	Subtitle *string           `json:"subtitle,omitempty" example:"Posição do seu município entre os 645 do Estado de São Paulo"`
+	Items    []RankingDataItem `json:"items"`
+}
+
 type ErrorResponse struct {
 	Message string `json:"message" example:"Erro ao processar a solicitação"`
 	Code    int    `json:"code" example:"400"`
@@ -24,6 +36,7 @@ func SetupCardsRoutes(rg *gin.RouterGroup) {
 	// Weather
 	setupTemperatureRoutes(rg)
 	setupHeatRoutes(rg)
+	setupRankingRoutes(rg)
 }
 
 // @Summary Retorna dados de temperatura
@@ -60,4 +73,22 @@ func setupHeatRoutes(rg *gin.RouterGroup) {
 	heatController := controllers_cards_weather.NewWeatherHeatController(heatService)
 
 	rg.GET("/cards/weather/heat", heatController.LoadHeatData)
+}
+
+// @Summary Retorna dados de ranking de clima
+// @Description Retorna os dados de ranking em clima para o município e ano fornecidos
+// @Tags cards
+// @Accept json
+// @Produce json
+// @Param city query string true "Código de município"
+// @Param year query string false "Ano dos dados"
+// @Success 200 {object} []RankingData
+// @Failure 400 {object} ErrorResponse
+// @Router /cards/weather/ranking [get]
+func setupRankingRoutes(rg *gin.RouterGroup) {
+	rankRepo := repositories_cards_weather.NewExternalWeatherRankingRepository()
+	rankService := services_cards_weather.NewWeatherRankingService(rankRepo)
+	rankController := controllers_cards_weather.NewWeatherRankingController(rankService)
+
+	rg.GET("/cards/weather/ranking", rankController.LoadRankingData)
 }
