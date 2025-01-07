@@ -52,7 +52,6 @@ type externalWeatherRankingRepository struct {
 	geoserverURL string
 }
 
-// Constructor
 func NewExternalWeatherRankingRepository() WeatherRankingRepository {
 	_ = godotenv.Load()
 
@@ -75,7 +74,6 @@ func NewExternalWeatherRankingRepository() WeatherRankingRepository {
 	}
 }
 
-// LoadYears retrieves all unique years from the data
 func (r *externalWeatherRankingRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
@@ -109,7 +107,6 @@ func (r *externalWeatherRankingRepository) LoadYears(city string) ([]int, error)
 	return years, nil
 }
 
-// LoadData retrieves weather ranking data for a specific year
 func (r *externalWeatherRankingRepository) LoadRankingData(city string, year string) ([]RankingData, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
@@ -150,7 +147,7 @@ func (r *externalWeatherRankingRepository) LoadRankingData(city string, year str
 		rankingProps.C3RankMeso = int(props["c3_rank_meso"].(float64))
 
 		// Estado
-		rankingProps.NMEstado = "São Paulo" // definindo manualmente
+		rankingProps.NMEstado = "São Paulo" // definindo manualmente (temporario)
 		rankingProps.NRankEstado = 645
 		rankingProps.C1RankEstado = int(props["c1_rank_estado"].(float64))
 		rankingProps.C2RankEstado = int(props["c2_rank_estado"].(float64))
@@ -170,7 +167,6 @@ func (r *externalWeatherRankingRepository) LoadRankingData(city string, year str
 
 	rankingProps := filtered.Properties.(RankingProperties)
 
-	// Return
 	result := []RankingData{
 		{
 			Title:    "Municipios do Estado",
