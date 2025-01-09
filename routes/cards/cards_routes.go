@@ -14,6 +14,18 @@ type CardsDataItem struct {
 	Value    string  `json:"value" example:"25°C"`
 }
 
+type RankingDataItem struct {
+	Type   string `json:"type"`
+	Number int    `json:"number"`
+	Of     int    `json:"of"`
+}
+
+type RankingData struct {
+	Title    string            `json:"title" example:"Municipios do Estado"`
+	Subtitle *string           `json:"subtitle,omitempty" example:"Posição do seu município entre os 645 do Estado de São Paulo"`
+	Items    []RankingDataItem `json:"items"`
+}
+
 type ErrorResponse struct {
 	Message string `json:"message" example:"Erro ao processar a solicitação"`
 	Code    int    `json:"code" example:"400"`
@@ -24,11 +36,9 @@ func SetupCardsRoutes(rg *gin.RouterGroup) {
 	// Weather
 	setupTemperatureRoutes(rg)
 	setupHeatRoutes(rg)
-<<<<<<< Updated upstream
-=======
 	setupRankingRoutes(rg)
 	setupInfoRoutes(rg)
->>>>>>> Stashed changes
+	setupRankingRoutes(rg)
 }
 
 // @Summary Retorna dados de temperatura
@@ -66,8 +76,6 @@ func setupHeatRoutes(rg *gin.RouterGroup) {
 
 	rg.GET("/cards/weather/heat", heatController.LoadHeatData)
 }
-<<<<<<< Updated upstream
-=======
 
 // @Summary Retorna dados de ranking de clima
 // @Description Retorna os dados de ranking em clima para o município e ano fornecidos
@@ -94,4 +102,3 @@ func setupInfoRoutes(rg *gin.RouterGroup) {
 
 	rg.GET("/cards/weather/info", infoController.LoadInfoData)
 }
->>>>>>> Stashed changes

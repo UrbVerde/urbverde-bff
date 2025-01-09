@@ -103,6 +103,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/cards/weather/ranking": {
+            "get": {
+                "description": "Retorna os dados de ranking em clima para o município e ano fornecidos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards"
+                ],
+                "summary": "Retorna dados de ranking de clima",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ano dos dados",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.RankingData"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/cards/weather/temperature": {
             "get": {
                 "description": "Retorna os dados de temperatura para o município e ano fornecidos",
@@ -179,7 +226,7 @@ const docTemplate = `{
             "properties": {
                 "subtitle": {
                     "type": "string",
-                    "example": "Abaixo da média nacional"
+                    "example": "Abaixo da média nacional de 0"
                 },
                 "title": {
                     "type": "string",
@@ -201,6 +248,39 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "Erro ao processar a solicitação"
+                }
+            }
+        },
+        "cards.RankingData": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cards.RankingDataItem"
+                    }
+                },
+                "subtitle": {
+                    "type": "string",
+                    "example": "Posição do seu município entre os 645 do Estado de São Paulo"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Municipios do Estado"
+                }
+            }
+        },
+        "cards.RankingDataItem": {
+            "type": "object",
+            "properties": {
+                "number": {
+                    "type": "integer"
+                },
+                "of": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
                 }
             }
         }

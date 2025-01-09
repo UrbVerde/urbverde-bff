@@ -34,7 +34,6 @@ type externalWeatherHeatRepository struct {
 	geoserverURL string
 }
 
-// Constructor
 func NewExternalWeatherHeatRepository() WeatherHeatRepository {
 	_ = godotenv.Load()
 
@@ -57,7 +56,6 @@ func NewExternalWeatherHeatRepository() WeatherHeatRepository {
 	}
 }
 
-// LoadYears retrieves all unique years from the data
 func (r *externalWeatherHeatRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
@@ -74,7 +72,6 @@ func (r *externalWeatherHeatRepository) LoadYears(city string) ([]int, error) {
 
 var subtitle string = "Porcentagem vivendo nas regiões mais quentes"
 
-// LoadData retrieves weather heat data for a specific year
 func (r *externalWeatherHeatRepository) LoadHeatData(city string, year string) ([]HeatDataItem, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
@@ -113,7 +110,6 @@ func (r *externalWeatherHeatRepository) LoadHeatData(city string, year string) (
 		return nil, fmt.Errorf("ano %d não encontrado nos dados", convYear)
 	}
 
-	// Cast para HeatProperties
 	heatProps := filtered.Properties.(HeatProperties)
 
 	// Values

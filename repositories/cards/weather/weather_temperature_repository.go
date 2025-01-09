@@ -34,7 +34,6 @@ type externalWeatherTemperatureRepository struct {
 	geoserverURL string
 }
 
-// Constructor
 func NewExternalWeatherTemperatureRepository() WeatherTemperatureRepository {
 	_ = godotenv.Load()
 
@@ -57,7 +56,6 @@ func NewExternalWeatherTemperatureRepository() WeatherTemperatureRepository {
 	}
 }
 
-// LoadYears retrieves all unique years from the data
 func (r *externalWeatherTemperatureRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
@@ -69,7 +67,6 @@ func (r *externalWeatherTemperatureRepository) LoadYears(city string) ([]int, er
 
 	yearsMap := make(map[int]bool)
 	for _, feature := range data.Features {
-		// Realiza o cast para as propriedades específicas
 		props, ok := feature.Properties.(map[string]interface{})
 =======
 	processProperties := func(props map[string]interface{}) (int, error) {
@@ -103,7 +100,6 @@ func tempLoadData(v1 int, v2 int, sub1 *string, sub2 *string) {
 	auxLoadSubtitles(v2, 0, sub2)
 }
 
-// LoadData retrieves weather temperature data for a specific year
 func (r *externalWeatherTemperatureRepository) LoadTemperatureData(city string, year string) ([]TemperatureDataItem, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
@@ -142,7 +138,6 @@ func (r *externalWeatherTemperatureRepository) LoadTemperatureData(city string, 
 		return nil, fmt.Errorf("ano %d não encontrado nos dados", convYear)
 	}
 
-	// Cast para TemperatureProperties
 	temperatureProps := filtered.Properties.(TemperatureProperties)
 
 	// Values

@@ -4,7 +4,6 @@ package address
 import (
 	"urbverde-api/controllers"
 	"urbverde-api/repositories"
-	"urbverde-api/routes/tracker"
 	"urbverde-api/services"
 
 	"github.com/gin-gonic/gin"
@@ -35,5 +34,4 @@ func SetupAddressRoutes(rg *gin.RouterGroup) {
 	addressController := controllers.NewAddressController(addressService)
 
 	rg.GET("/address/suggestions", addressController.GetSuggestions)
-	tracker.AddEndpoint("GET", "/address/suggestions", "Retorna sugestões de endereço")
 }
