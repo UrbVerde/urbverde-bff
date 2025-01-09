@@ -24,6 +24,11 @@ func SetupCardsRoutes(rg *gin.RouterGroup) {
 	// Weather
 	setupTemperatureRoutes(rg)
 	setupHeatRoutes(rg)
+<<<<<<< Updated upstream
+=======
+	setupRankingRoutes(rg)
+	setupInfoRoutes(rg)
+>>>>>>> Stashed changes
 }
 
 // @Summary Retorna dados de temperatura
@@ -61,3 +66,32 @@ func setupHeatRoutes(rg *gin.RouterGroup) {
 
 	rg.GET("/cards/weather/heat", heatController.LoadHeatData)
 }
+<<<<<<< Updated upstream
+=======
+
+// @Summary Retorna dados de ranking de clima
+// @Description Retorna os dados de ranking em clima para o município e ano fornecidos
+// @Tags cards
+// @Accept json
+// @Produce json
+// @Param city query string true "Código de município"
+// @Param year query string false "Ano dos dados"
+// @Success 200 {object} []RankingData
+// @Failure 400 {object} ErrorResponse
+// @Router /cards/weather/ranking [get]
+func setupRankingRoutes(rg *gin.RouterGroup) {
+	rankRepo := repositories_cards_weather.NewExternalWeatherRankingRepository()
+	rankService := services_cards_weather.NewWeatherRankingService(rankRepo)
+	rankController := controllers_cards_weather.NewWeatherRankingController(rankService)
+
+	rg.GET("/cards/weather/ranking", rankController.LoadRankingData)
+}
+
+func setupInfoRoutes(rg *gin.RouterGroup) {
+	infoRepo := repositories_cards_weather.NewExternalWeatherInfoRepository()
+	infoService := services_cards_weather.NewWeatherInfoService(infoRepo)
+	infoController := controllers_cards_weather.NewWeatherInfoController(infoService)
+
+	rg.GET("/cards/weather/info", infoController.LoadInfoData)
+}
+>>>>>>> Stashed changes
