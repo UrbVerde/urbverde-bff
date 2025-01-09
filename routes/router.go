@@ -6,7 +6,6 @@ import (
 	_ "urbverde-api/docs"
 	"urbverde-api/routes/address"
 	"urbverde-api/routes/cards"
-	"urbverde-api/routes/tracker"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -31,11 +30,6 @@ func SetupRouter() *gin.Engine {
 	{
 		cards.SetupCardsRoutes(v1)
 		address.SetupAddressRoutes(v1)
-		v1.GET("/endpoints", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{
-				"available_endpoints": tracker.AvailableEndpoints,
-			})
-		})
 	}
 
 	// Swagger UI route: Register this after all other routes

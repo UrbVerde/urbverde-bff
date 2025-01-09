@@ -17,7 +17,7 @@ definitions:
   cards.CardsDataItem:
     properties:
       subtitle:
-        example: Abaixo da média nacional
+        example: Abaixo da média nacional de 0
         type: string
       title:
         example: Nível de ilha de calor
@@ -33,6 +33,28 @@ definitions:
         type: integer
       message:
         example: Erro ao processar a solicitação
+        type: string
+    type: object
+  cards.RankingData:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/cards.RankingDataItem'
+        type: array
+      subtitle:
+        example: Posição do seu município entre os 645 do Estado de São Paulo
+        type: string
+      title:
+        example: Municipios do Estado
+        type: string
+    type: object
+  cards.RankingDataItem:
+    properties:
+      number:
+        type: integer
+      of:
+        type: integer
+      type:
         type: string
     type: object
 host: localhost:8080
@@ -98,6 +120,37 @@ paths:
           schema:
             $ref: '#/definitions/cards.ErrorResponse'
       summary: Retorna dados de calor extremo
+      tags:
+      - cards
+  /cards/weather/ranking:
+    get:
+      consumes:
+      - application/json
+      description: Retorna os dados de ranking em clima para o município e ano fornecidos
+      parameters:
+      - description: Código de município
+        in: query
+        name: city
+        required: true
+        type: string
+      - description: Ano dos dados
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/cards.RankingData'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/cards.ErrorResponse'
+      summary: Retorna dados de ranking de clima
       tags:
       - cards
   /cards/weather/temperature:
