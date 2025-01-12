@@ -52,6 +52,20 @@ func NewExternalAddressRepository() AddressRepository {
 	}
 }
 
+// improved matching for city names with accents
+var replacer = strings.NewReplacer(
+	"á", "a", "à", "a", "ã", "a", "â", "a",
+	"é", "e", "ê", "e",
+	"í", "i",
+	"ó", "o", "ô", "o", "õ", "o",
+	"ú", "u",
+	"ç", "c",
+)
+
+func normalizeText(s string) string {
+	return replacer.Replace(strings.ToLower(s))
+}
+
 func (r *externalAddressRepository) SearchAddress(query string) ([]CityResponse, error) {
 	url := r.apiURL
 
@@ -71,16 +85,18 @@ func (r *externalAddressRepository) SearchAddress(query string) ([]CityResponse,
 	}
 
 	var cityResponses []CityResponse
-	qL := strings.ToLower(query)
+	normalizedQuery := normalizeText(query)
+
 	for _, city := range cities {
-		cityName := strings.ToLower(city.Nome)
-		if strings.HasPrefix(cityName, qL) {
+		normalizedCityName := normalizeText(city.Nome)
+		if strings.HasPrefix(normalizedCityName, normalizedQuery) {
 			cityResponses = append(cityResponses, CityResponse{
 				DisplayName: fmt.Sprintf("%s - %s", city.Nome, city.Microrregiao.Mesorregiao.UF.Sigla),
 				CdMun:       city.ID,
 			})
 		}
 	}
+
 	// Sort cityResponses alphabetically by DisplayName
 	sort.Slice(cityResponses, func(i, j int) bool {
 		return cityResponses[i].DisplayName < cityResponses[j].DisplayName
