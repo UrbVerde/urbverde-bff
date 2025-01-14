@@ -66,7 +66,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "cards"
+                    "cards/weather"
                 ],
                 "summary": "Retorna dados de calor extremo",
                 "parameters": [
@@ -103,6 +103,47 @@ const docTemplate = `{
                 }
             }
         },
+        "/cards/weather/info": {
+            "get": {
+                "description": "Retorna dados adicionais para o município fornecido",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/weather"
+                ],
+                "summary": "Retorna dados adicionais",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/cards/weather/ranking": {
             "get": {
                 "description": "Retorna os dados de ranking em clima para o município e ano fornecidos",
@@ -113,7 +154,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "cards"
+                    "cards/weather"
                 ],
                 "summary": "Retorna dados de ranking de clima",
                 "parameters": [
@@ -160,7 +201,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "cards"
+                    "cards/weather"
                 ],
                 "summary": "Retorna dados de temperatura",
                 "parameters": [
