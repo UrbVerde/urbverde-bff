@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 )
 
 const (
@@ -29,7 +30,6 @@ type Feature struct {
 	Properties Properties `json:"properties"`
 }
 
-// Helper function for HTTP GET requests
 func FetchFromURL(url string) (*FeatureCollection, error) {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -55,4 +55,35 @@ func MapToStruct(m map[string]interface{}, v interface{}) error {
 		return err
 	}
 	return json.Unmarshal(data, v)
+}
+
+func LoadYears(url string, processProperties func(map[string]interface{}) (int, error)) ([]int, error) {
+	data, err := FetchFromURL(url)
+	if err != nil {
+		return nil, err
+	}
+
+	yearsMap := make(map[int]bool)
+
+	for _, feature := range data.Features {
+		props, ok := feature.Properties.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("unexpected property type")
+		}
+
+		year, err := processProperties(props)
+		if err != nil {
+			return nil, err
+		}
+		yearsMap[year] = true
+	}
+
+	var years []int
+	for year := range yearsMap {
+		years = append(years, year)
+	}
+
+	sort.Sort(sort.Reverse(sort.IntSlice(years)))
+
+	return years, nil
 }

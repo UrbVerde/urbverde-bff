@@ -121,7 +121,34 @@ paths:
             $ref: '#/definitions/cards.ErrorResponse'
       summary: Retorna dados de calor extremo
       tags:
-      - cards
+      - cards/weather
+  /cards/weather/info:
+    get:
+      consumes:
+      - application/json
+      description: Retorna dados adicionais para o município fornecido
+      parameters:
+      - description: Código de município
+        in: query
+        name: city
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/cards.CardsDataItem'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/cards.ErrorResponse'
+      summary: Retorna dados adicionais
+      tags:
+      - cards/weather
   /cards/weather/ranking:
     get:
       consumes:
@@ -152,7 +179,7 @@ paths:
             $ref: '#/definitions/cards.ErrorResponse'
       summary: Retorna dados de ranking de clima
       tags:
-      - cards
+      - cards/weather
   /cards/weather/temperature:
     get:
       consumes:
@@ -183,5 +210,5 @@ paths:
             $ref: '#/definitions/cards.ErrorResponse'
       summary: Retorna dados de temperatura
       tags:
-      - cards
+      - cards/weather
 swagger: "2.0"

@@ -3,7 +3,6 @@ package repositories_cards_weather
 import (
 	"fmt"
 	"os"
-	"sort"
 	"strconv"
 	cards_shared "urbverde-api/repositories/cards"
 
@@ -77,34 +76,15 @@ func NewExternalWeatherRankingRepository() WeatherRankingRepository {
 func (r *externalWeatherRankingRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
-	data, err := cards_shared.FetchFromURL(url)
-	if err != nil {
-		return nil, err
-	}
-
-	yearsMap := make(map[int]bool)
-	for _, feature := range data.Features {
-		props, ok := feature.Properties.(map[string]interface{})
+	processProperties := func(props map[string]interface{}) (int, error) {
+		year, ok := props["ano"].(float64)
 		if !ok {
-			return nil, fmt.Errorf("tipo inesperado de propriedades")
+			return 0, fmt.Errorf("year not found or invalid type")
 		}
-
-		var rankingProps RankingProperties
-		if err := cards_shared.MapToStruct(props, &rankingProps); err != nil {
-			return nil, err
-		}
-
-		yearsMap[rankingProps.Ano] = true
+		return int(year), nil
 	}
 
-	var years []int
-	for year := range yearsMap {
-		years = append(years, year)
-	}
-
-	sort.Sort(sort.Reverse(sort.IntSlice(years)))
-
-	return years, nil
+	return cards_shared.LoadYears(url, processProperties)
 }
 
 func (r *externalWeatherRankingRepository) LoadRankingData(city string, year string) ([]RankingData, error) {
