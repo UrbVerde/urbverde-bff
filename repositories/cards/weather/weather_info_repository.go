@@ -3,6 +3,7 @@ package repositories_cards_weather
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	cards_shared "urbverde-api/repositories/cards"
 
@@ -10,17 +11,16 @@ import (
 )
 
 type WeatherInfoRepository interface {
-	LoadInfoData(city string, year string) ([]InfoDataItem, error)
+	LoadInfoData(city string) ([]InfoDataItem, error)
 }
 
 type InfoProperties struct {
 	Ano int     `json:"ano"`
 	B1  float64 `json:"b1"` // % cobertura vegetal (vegetal)
 	A1  float64 `json:"a1"` // Moradores prox a praças (square)
-	B3  float64 `json:"b3"` // Desigualdade ambiental e social (square)
+	B3  float64 `json:"b3"` // Desigualdade ambiental e social (vegetal)
 }
 
-// Response JSON structure
 type InfoDataItem struct {
 	Title string `json:"title"`
 	Value string `json:"value"`
@@ -63,21 +63,13 @@ func NewExternalWeatherInfoRepository() WeatherInfoRepository {
 	}
 }
 
-func (r *externalWeatherInfoRepository) LoadInfoData(city string, year string) ([]InfoDataItem, error) {
-
-	convYear, err := strconv.Atoi(year)
-	if err != nil {
-		return nil, fmt.Errorf("ano inválido: %w", err)
-	}
-
-	// square
+func (r *externalWeatherInfoRepository) loadGeneralData(city string) (*cards_shared.FeatureCollection, error) {
 	squareUrl := r.squareURL + city + "&outputFormat=application/json"
 	squareData, err := cards_shared.FetchFromURL(squareUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	// vegetal
 	vegetalUrl := r.vegetalURL + city + "&outputFormat=application/json"
 	vegetalData, err := cards_shared.FetchFromURL(vegetalUrl)
 	if err != nil {
@@ -89,39 +81,62 @@ func (r *externalWeatherInfoRepository) LoadInfoData(city string, year string) (
 		Features: Tdata,
 	}
 
-	var filtered cards_shared.Feature
-	found := false
-	for _, feature := range data.Features {
-		props, ok := feature.Properties.(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("tipo inesperado de propriedades")
+	return data, nil
+}
+
+func sortGeneralData(data *cards_shared.FeatureCollection) *cards_shared.FeatureCollection {
+	sort.Slice(data.Features, func(i, j int) bool {
+		propsI := data.Features[i].Properties.(map[string]interface{})
+		propsJ := data.Features[j].Properties.(map[string]interface{})
+
+		anoI, okI := propsI["ano"].(float64)
+		anoJ, okJ := propsJ["ano"].(float64)
+		if !okI || !okJ {
+			panic("campo 'ano' não é do tipo float64")
 		}
 
-		var infoProps InfoProperties
-		if err := cards_shared.MapToStruct(props, &infoProps); err != nil {
-			return nil, err
-		}
+		return int(anoI) > int(anoJ)
+	})
 
-		if infoProps.Ano == convYear {
-			filtered = feature
-			filtered.Properties = infoProps
-			found = true
-			break
-		}
+	return data
+}
+
+func (r *externalWeatherInfoRepository) LoadInfoData(city string) ([]InfoDataItem, error) {
+	data, err := r.loadGeneralData(city)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao carregar dados: %w", err)
 	}
 
-	if !found {
-		return nil, fmt.Errorf("ano %d não encontrado nos dados", convYear)
+	data = sortGeneralData(data)
+
+	// busca o valor mais recente != 0
+	findLatestNonZero := func(features []cards_shared.Feature, key string) (float64, bool) {
+		for _, feature := range features {
+			props, ok := feature.Properties.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			value, ok := props[key].(float64)
+			if ok && value != 0 {
+				return value, true
+			}
+		}
+		return 0, false
 	}
 
-	infoProps := filtered.Properties.(InfoProperties)
+	latestB1, foundB1 := findLatestNonZero(data.Features, "b1")
+	latestA1, foundA1 := findLatestNonZero(data.Features, "a1")
+	latestB3, foundB3 := findLatestNonZero(data.Features, "b3")
 
-	fmt.Println(infoProps)
+	if !foundB1 && !foundA1 && !foundB3 {
+		return nil, fmt.Errorf("nenhum dado válido encontrado")
+	}
 
 	result := []InfoDataItem{
-		{"Média da cobertura vegetal", strconv.Itoa(int(infoProps.B1*100)) + "%"},
-		{"Moradores próximos a praças", strconv.Itoa(int(infoProps.A1)) + "%"},
-		{"Desigualdade ambiental e social", strconv.Itoa(int(infoProps.B3 * 100))},
+		{"Média da cobertura vegetal", strconv.Itoa(int(latestB1*100)) + "%"},
+		{"Moradores próximos a praças", strconv.Itoa(int(latestA1)) + "%"},
+		{"Desigualdade ambiental e social", strconv.Itoa(int(latestB3 * 100))},
 	}
 
 	return result, nil

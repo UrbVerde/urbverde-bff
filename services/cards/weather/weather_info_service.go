@@ -5,7 +5,7 @@ import (
 )
 
 type WeatherInfoService interface {
-	LoadInfoData(city string, year string) ([]repositories_cards_weather.InfoDataItem, error)
+	LoadInfoData(city string) ([]repositories_cards_weather.InfoDataItem, error)
 }
 
 type weatherInfoService struct {
@@ -18,8 +18,8 @@ func NewWeatherInfoService(ar repositories_cards_weather.WeatherInfoRepository) 
 	}
 }
 
-func (as *weatherInfoService) LoadInfoData(city string, year string) ([]repositories_cards_weather.InfoDataItem, error) {
-	data, err := as.WeatherInfoRepository.LoadInfoData(city, year)
+func (as *weatherInfoService) LoadInfoData(city string) ([]repositories_cards_weather.InfoDataItem, error) {
+	data, err := as.WeatherInfoRepository.LoadInfoData(city)
 	if err != nil {
 		return nil, err
 	}

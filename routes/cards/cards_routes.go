@@ -38,7 +38,6 @@ func SetupCardsRoutes(rg *gin.RouterGroup) {
 	setupHeatRoutes(rg)
 	setupRankingRoutes(rg)
 	setupInfoRoutes(rg)
-	setupRankingRoutes(rg)
 }
 
 // @Summary Retorna dados de temperatura

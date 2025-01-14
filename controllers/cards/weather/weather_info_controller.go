@@ -19,9 +19,8 @@ func NewWeatherInfoController(service services_cards_weather.WeatherInfoService)
 
 func (ac *WeatherInfoController) LoadInfoData(c *gin.Context) {
 	city := c.Query("city")
-	year := c.Query("year")
 
-	data, err := ac.WeatherInfoService.LoadInfoData(city, year)
+	data, err := ac.WeatherInfoService.LoadInfoData(city)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Erro ao buscar dados de temperatura",
