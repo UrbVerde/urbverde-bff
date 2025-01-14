@@ -59,19 +59,8 @@ func NewExternalWeatherTemperatureRepository() WeatherTemperatureRepository {
 func (r *externalWeatherTemperatureRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
-<<<<<<< Updated upstream
-	data, err := cards_shared.FetchFromURL(url)
-	if err != nil {
-		return nil, err
-	}
-
-	yearsMap := make(map[int]bool)
-	for _, feature := range data.Features {
-		props, ok := feature.Properties.(map[string]interface{})
-=======
 	processProperties := func(props map[string]interface{}) (int, error) {
 		year, ok := props["ano"].(float64)
->>>>>>> Stashed changes
 		if !ok {
 			return 0, fmt.Errorf("year not found or invalid type")
 		}
