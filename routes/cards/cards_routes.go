@@ -5,6 +5,10 @@ import (
 	repositories_cards_weather "urbverde-api/repositories/cards/weather"
 	services_cards_weather "urbverde-api/services/cards/weather"
 
+	controllers_cards_vegetal "urbverde-api/controllers/cards/vegetal"
+	repositories_cards_vegetal "urbverde-api/repositories/cards/vegetal"
+	services_cards_vegetal "urbverde-api/services/cards/vegetal"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -38,6 +42,9 @@ func SetupCardsRoutes(rg *gin.RouterGroup) {
 	setupHeatRoutes(rg)
 	setupRankingRoutes(rg)
 	setupInfoRoutes(rg)
+
+	// Vegetal
+	setupCoverRoutes(rg)
 }
 
 // @Summary Retorna dados de temperatura
@@ -109,4 +116,12 @@ func setupInfoRoutes(rg *gin.RouterGroup) {
 	infoController := controllers_cards_weather.NewWeatherInfoController(infoService)
 
 	rg.GET("/cards/weather/info", infoController.LoadInfoData)
+}
+
+func setupCoverRoutes(rg *gin.RouterGroup) {
+	coverRepo := repositories_cards_vegetal.NewExternalVegetalCoverRepository()
+	coverService := services_cards_vegetal.NewVegetalCoverService(coverRepo)
+	coverController := controllers_cards_vegetal.NewVegetalCoverController(coverService)
+
+	rg.GET("/cards/vegetal/cover", coverController.LoadCoverData)
 }
