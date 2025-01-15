@@ -1,4 +1,4 @@
-// urbverde-bff/services/categories_service.go
+// urbverde-bff/services/categories/categories_service.go
 package services_categories
 
 import (

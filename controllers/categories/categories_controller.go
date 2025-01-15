@@ -1,4 +1,4 @@
-// urbverde-bff/controllers/categories_controller.go
+// urbverde-bff/controllers/categories/categories_controller.go
 package controllers
 
 import (

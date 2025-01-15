@@ -1,4 +1,4 @@
-// repositories/address/categories_repository.go
+// urbverde-bff/repositories/categories/categories_repository.go
 package repositories_categories
 
 import (
