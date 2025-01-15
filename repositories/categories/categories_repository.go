@@ -2,10 +2,15 @@
 package repositories_categories
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 )
+
+//go:embed data/*.json
+var dataFiles embed.FS
 
 type Layer struct {
 	ID       string `json:"id"`
@@ -25,74 +30,93 @@ type CategoriesResponse struct {
 	Categories []Category `json:"categories"`
 }
 
+type ExclusiveLayer struct {
+	ID              string   `json:"id"`
+	Name            string   `json:"name"`
+	IsActive        bool     `json:"isActive"`
+	IsNew           bool     `json:"isNew"`
+	AddToCategories []string `json:"addToCategories"`
+}
+
+type CityExclusiveLayers struct {
+	Name   string           `json:"name"`
+	Layers []ExclusiveLayer `json:"layers"`
+}
+
+type ExclusiveLayersMap map[int]CityExclusiveLayers
+
 type CategoriesRepository interface {
 	GetCategories(cityCode string) (*CategoriesResponse, error)
 }
 
 type categoriesRepository struct {
-	baseCategories CategoriesResponse
+	baseCategories  CategoriesResponse
+	exclusiveLayers ExclusiveLayersMap
+}
+
+func loadJSONFile(filename string, target interface{}) error {
+	data, err := dataFiles.ReadFile(filename)
+	if err != nil {
+		return fmt.Errorf("error reading file %s: %w", filename, err)
+	}
+
+	if err := json.Unmarshal(data, target); err != nil {
+		return fmt.Errorf("error unmarshaling %s: %w", filename, err)
+	}
+
+	return nil
 }
 
 func NewCategoriesRepository() (CategoriesRepository, error) {
-	// This would typically come from a database or external service
-	categoriesJson := `{
-		"categories": [
-			{
-				"id": "climate",
-				"name": "Clima",
-				"icon": "Snowy Sunny Day.svg",
-				"layers": [
-					{"id": "surface_temp", "name": "Temperatura de superfície", "isActive": false, "isNew": true},
-					{"id": "max_surface_temp", "name": "Temperatura máxima de superfície", "isActive": false, "isNew": false},
-					{"id": "heat_island", "name": "Nível de exposição à ilha de calor", "isActive": false, "isNew": false}
-				]
-			},
-			{
-				"id": "vegetation",
-				"name": "Vegetação",
-				"icon": "Oak Tree.svg",
-				"layers": [
-					{"id": "pcv", "name": "Coberta vegetal (PCV)", "isActive": false, "isNew": false},
-					{"id": "icv", "name": "Cobertura vegetal por habitante (ICV)", "isActive": false, "isNew": false}
-				]
-			},
-			{
-				"id": "parks",
-				"name": "Parques e Praças",
-				"icon": "Nature.svg",
-				"layers": [
-					{"id": "park_distribution", "name": "Distribuição dos parques", "isActive": false, "isNew": false},
-					{"id": "green_area_per_capita", "name": "Área verde por habitante", "isActive": false, "isNew": false}
-				]
-			},
-			{
-				"id": "census",
-				"name": "Censo",
-				"icon": "bi bi-people",
-				"layers": [
-					{"id": "population", "name": "População", "isActive": false, "isNew": false},
-					{"id": "revenue", "name": "Renda per capita", "isActive": false, "isNew": false}
-				]
-			},
-			{
-				"id": "transport",
-				"name": "Mobilidade",
-				"icon": "bi bi-bicycle",
-				"layers": [
-					{"id": "bike_lanes", "name": "Ciclovias", "isActive": false, "isNew": true}
-				]
-			}
-		]
-	}`
-
 	var baseCategories CategoriesResponse
-	if err := json.Unmarshal([]byte(categoriesJson), &baseCategories); err != nil {
-		return nil, fmt.Errorf("error unmarshaling base categories: %w", err)
+	if err := loadJSONFile("data/base_categories.json", &baseCategories); err != nil {
+		return nil, err
+	}
+
+	var exclusiveLayers ExclusiveLayersMap
+	if err := loadJSONFile("data/exclusive_layers.json", &exclusiveLayers); err != nil {
+		return nil, err
 	}
 
 	return &categoriesRepository{
-		baseCategories: baseCategories,
+		baseCategories:  baseCategories,
+		exclusiveLayers: exclusiveLayers,
 	}, nil
+}
+
+func (r *categoriesRepository) addExclusiveLayers(response *CategoriesResponse, cityCode string) {
+	cityCodeInt, err := strconv.Atoi(cityCode)
+	if err != nil {
+		return
+	}
+
+	cityLayers, exists := r.exclusiveLayers[cityCodeInt]
+	if !exists {
+		return
+	}
+
+	// For each exclusive layer defined for this city
+	for _, exclusiveLayer := range cityLayers.Layers {
+		layer := Layer{
+			ID:       exclusiveLayer.ID,
+			Name:     exclusiveLayer.Name,
+			IsActive: exclusiveLayer.IsActive,
+			IsNew:    exclusiveLayer.IsNew,
+		}
+
+		// Add the layer to all specified categories
+		for i := range response.Categories {
+			for _, categoryID := range exclusiveLayer.AddToCategories {
+				if response.Categories[i].ID == categoryID {
+					// Insert at beginning of layers slice
+					newLayers := make([]Layer, len(response.Categories[i].Layers)+1)
+					newLayers[0] = layer
+					copy(newLayers[1:], response.Categories[i].Layers)
+					response.Categories[i].Layers = newLayers
+				}
+			}
+		}
+	}
 }
 
 func (r *categoriesRepository) GetCategories(cityCode string) (*CategoriesResponse, error) {
@@ -121,56 +145,8 @@ func (r *categoriesRepository) GetCategories(cityCode string) (*CategoriesRespon
 		return &response, nil
 	}
 
-	// Handle special cases for specific cities
-	switch cityCode {
-	case "3534708": // Ourinhos-SP
-		exclusiveLayer := Layer{
-			ID:       "tree_inventory",
-			Name:     "Inventário de Árvores",
-			IsActive: false,
-			IsNew:    true,
-		}
-
-		// Add to vegetation and parks categories
-		for i, category := range response.Categories {
-			if category.ID == "vegetation" || category.ID == "parks" {
-				newLayers := append([]Layer{exclusiveLayer}, category.Layers...)
-				response.Categories[i].Layers = newLayers
-			}
-		}
-
-	case "3548906": // São Carlos
-		exclusiveLayer := Layer{
-			ID:       "fruit_trees",
-			Name:     "Pés de Fruta",
-			IsActive: false,
-			IsNew:    true,
-		}
-
-		// Add to agriculture category
-		for i, category := range response.Categories {
-			if category.ID == "agriculture" {
-				newLayers := append([]Layer{exclusiveLayer}, category.Layers...)
-				response.Categories[i].Layers = newLayers
-			}
-		}
-
-	case "3552205": // Sorocaba
-		exclusiveLayer := Layer{
-			ID:       "innundation_points",
-			Name:     "Pontos de inundação",
-			IsActive: false,
-			IsNew:    true,
-		}
-
-		// Add to water category
-		for i, category := range response.Categories {
-			if category.ID == "water" {
-				newLayers := append([]Layer{exclusiveLayer}, category.Layers...)
-				response.Categories[i].Layers = newLayers
-			}
-		}
-	}
+	// Add any exclusive layers for this city
+	r.addExclusiveLayers(&response, cityCode)
 
 	return &response, nil
 }
