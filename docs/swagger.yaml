@@ -1,4 +1,3 @@
-# urbverde-bff/docs/swagger.yaml
 basePath: /v1
 definitions:
   address.AddressSuggestion:
@@ -58,10 +57,56 @@ definitions:
       type:
         type: string
     type: object
+  controllers_categories.ErrorResponse:
+    properties:
+      code:
+        example: 400
+        type: integer
+      message:
+        example: Erro ao processar a solicitação
+        type: string
+    type: object
+  repositories_categories.CategoriesResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/repositories_categories.Category'
+        type: array
+    type: object
+  repositories_categories.Category:
+    properties:
+      icon:
+        type: string
+      id:
+        type: string
+      layers:
+        items:
+          $ref: '#/definitions/repositories_categories.Layer'
+        type: array
+      name:
+        type: string
+    type: object
+  repositories_categories.Layer:
+    properties:
+      id:
+        type: string
+      isActive:
+        type: boolean
+      isNew:
+        type: boolean
+      name:
+        type: string
+    type: object
 host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: comunica.urbverde@usp.br
+    name: API Support
+    url: http://www.urbverde.com.br/
   description: API para fornecer sugestões de endereço e outros serviços relacionados
+  license:
+    name: ???
+    url: ???
   title: UrbVerde BFF
   version: "1.0"
 paths:
@@ -212,4 +257,29 @@ paths:
       summary: Retorna dados de temperatura
       tags:
       - cards/weather
+  /categories:
+    get:
+      consumes:
+      - application/json
+      description: Retorna as categorias e camadas disponíveis para o município
+      parameters:
+      - description: Código do município
+        in: query
+        name: city
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repositories_categories.CategoriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers_categories.ErrorResponse'
+      summary: Retorna categorias disponíveis
+      tags:
+      - categories
 swagger: "2.0"

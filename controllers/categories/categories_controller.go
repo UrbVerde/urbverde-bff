@@ -1,5 +1,5 @@
 // urbverde-bff/controllers/categories/categories_controller.go
-package controllers
+package controllers_categories
 
 import (
 	"net/http"
@@ -7,6 +7,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+type ErrorResponse struct {
+	Message string `json:"message" example:"Erro ao processar a solicitação"`
+	Code    int    `json:"code" example:"400"`
+}
 
 type CategoriesController struct {
 	CategoriesService services_categories.CategoriesService
@@ -28,12 +33,12 @@ func NewCategoriesController(service services_categories.CategoriesService) *Cat
 // @Failure 400 {object} ErrorResponse
 // @Router /categories [get]
 func (cc *CategoriesController) GetCategories(c *gin.Context) {
-	cityCode := c.Query("code")
+	cityCode := c.Query("city")
 
 	if cityCode == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "City code is required",
-			"error":   "MISSING_CODE",
+			"error":   "MISSING_CITY",
 		})
 		return
 	}
