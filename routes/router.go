@@ -6,6 +6,7 @@ import (
 	_ "urbverde-api/docs"
 	"urbverde-api/routes/address"
 	"urbverde-api/routes/cards"
+	"urbverde-api/routes/categories"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -30,10 +31,11 @@ func SetupRouter() *gin.Engine {
 	{
 		cards.SetupCardsRoutes(v1)
 		address.SetupAddressRoutes(v1)
+		categories.SetupCategoriesRoutes(v1)
 	}
 
 	// Swagger UI route: Register this after all other routes
-	url := ginSwagger.URL("/swagger/doc.json") // Swagger endpoint
+	url := ginSwagger.URL("/swagger/doc.json")
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 
 	// Optional: Redirect root to Swagger
