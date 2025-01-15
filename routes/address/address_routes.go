@@ -2,9 +2,9 @@
 package address
 
 import (
-	"urbverde-api/controllers"
+	controllers_address "urbverde-api/controllers/address"
 	repositories_address "urbverde-api/repositories/address"
-	"urbverde-api/services"
+	services_address "urbverde-api/services/address"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,8 +30,8 @@ type ErrorResponse struct {
 // @Router /address/suggestions [get]
 func SetupAddressRoutes(rg *gin.RouterGroup) {
 	addressRepo := repositories_address.NewExternalAddressRepository()
-	addressService := services.NewAddressService(addressRepo)
-	addressController := controllers.NewAddressController(addressService)
+	addressService := services_address.NewAddressService(addressRepo)
+	addressController := controllers_address.NewAddressController(addressService)
 
 	rg.GET("/address/suggestions", addressController.GetSuggestions)
 }

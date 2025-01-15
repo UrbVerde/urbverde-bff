@@ -35,8 +35,14 @@ func SetupRouter() *gin.Engine {
 	}
 
 	// Swagger UI route: Register this after all other routes
-	url := ginSwagger.URL("/swagger/doc.json")
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
+	config := ginSwagger.Config{
+		URL:                      "/swagger/doc.json",
+		DeepLinking:              true,
+		DefaultModelsExpandDepth: -1,
+		DocExpansion:             "list",
+	}
+
+	r.GET("/swagger/*any", ginSwagger.CustomWrapHandler(&config, swaggerFiles.Handler))
 
 	// Optional: Redirect root to Swagger
 	r.GET("/", func(c *gin.Context) {
