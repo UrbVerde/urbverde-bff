@@ -2,26 +2,26 @@
 package services
 
 import (
-	"urbverde-api/repositories"
+	repositories_address "urbverde-api/repositories/address"
 )
 
 type AddressService interface {
-	GetSuggestions(query string) ([]repositories.CityResponse, error)
+	GetSuggestions(query string) ([]repositories_address.CityResponse, error)
 }
 
 type addressService struct {
-	AddressRepository repositories.AddressRepository
+	AddressRepository repositories_address.AddressRepository
 }
 
 // NewAddressService creates a new address service instance
-func NewAddressService(ar repositories.AddressRepository) AddressService {
+func NewAddressService(ar repositories_address.AddressRepository) AddressService {
 	return &addressService{
 		AddressRepository: ar,
 	}
 }
 
 // GetSuggestions retrieves address suggestions based on the query
-func (as *addressService) GetSuggestions(query string) ([]repositories.CityResponse, error) {
+func (as *addressService) GetSuggestions(query string) ([]repositories_address.CityResponse, error) {
 	suggestions, err := as.AddressRepository.SearchAddress(query)
 	if err != nil {
 		return nil, err

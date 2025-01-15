@@ -3,7 +3,7 @@ package address
 
 import (
 	"urbverde-api/controllers"
-	"urbverde-api/repositories"
+	repositories_address "urbverde-api/repositories/address"
 	"urbverde-api/services"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +29,7 @@ type ErrorResponse struct {
 // @Failure 400 {object} ErrorResponse
 // @Router /address/suggestions [get]
 func SetupAddressRoutes(rg *gin.RouterGroup) {
-	addressRepo := repositories.NewExternalAddressRepository()
+	addressRepo := repositories_address.NewExternalAddressRepository()
 	addressService := services.NewAddressService(addressRepo)
 	addressController := controllers.NewAddressController(addressService)
 
