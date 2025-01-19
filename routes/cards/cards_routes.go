@@ -1,3 +1,4 @@
+// urbverde-bff/routes/cards/cards_routes.go
 package cards
 
 import (
@@ -31,9 +32,8 @@ type ErrorResponse struct {
 	Code    int    `json:"code" example:"400"`
 }
 
-// SetupCardsRoutes
+// SetupCardsRoutes configures all weather-related card routes
 func SetupCardsRoutes(rg *gin.RouterGroup) {
-	// Weather
 	setupTemperatureRoutes(rg)
 	setupHeatRoutes(rg)
 	setupRankingRoutes(rg)

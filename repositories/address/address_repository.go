@@ -1,5 +1,5 @@
-// urbverde-bff/repositories/address_repository.go
-package repositories
+// urbverde-bff/repositories/address/address_repository.go
+package repositories_address
 
 import (
 	"encoding/json"

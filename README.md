@@ -1,3 +1,4 @@
+# urbverde-bff/README.md
 <!-- urbverde-bff/README.md -->
 # UrbVerde API
 
@@ -21,6 +22,7 @@ API desenvolvida em Go para fornecer sugestões de endereço e outros serviços 
 2. Instale as dependências listadas no `go.mod`:
    ```bash
    go mod download
+   go mod tidy
    ```
 
 3. Inicie o servidor:

@@ -1,18 +1,18 @@
 // urbverde-bff/controllers/address_controller.go
-package controllers
+package controllers_address
 
 import (
 	"net/http"
-	"urbverde-api/services"
+	services_address "urbverde-api/services/address"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AddressController struct {
-	AddressService services.AddressService
+	AddressService services_address.AddressService
 }
 
-func NewAddressController(service services.AddressService) *AddressController {
+func NewAddressController(service services_address.AddressService) *AddressController {
 	return &AddressController{
 		AddressService: service,
 	}
