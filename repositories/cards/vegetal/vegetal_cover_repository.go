@@ -17,10 +17,10 @@ type VegetalCoverRepository interface {
 
 type CoverProperties struct {
 	Ano  int     `json:"ano"`
-	B1h1 float64 `json:"b1h1"` // Média cobertura vegetal
+	B1h1 float64 `json:"b1h1"` // % da cobertura vegetal
 	B1h4 float64 `json:"b1h4"` // Variação Max
 	B1h3 float64 `json:"b1h3"` // Variação Min
-	// C2   float64 `json:"c2"`   // Campos de futebol
+	// C2   float64 `json:"c2"`   // Área vegetada
 }
 
 // Response JSON structure
@@ -70,24 +70,23 @@ func (r *externalVegetalCoverRepository) LoadYears(city string) ([]int, error) {
 	return cards_shared.LoadYears(url, processProperties)
 }
 
-// func auxLoadSubtitles(value int, avg int, subtitle *string) {
-// 	if subtitle == nil {
-// 		return
-// 	}
+func auxLoadSubtitles(value int, avg int, subtitle *string) {
+	if subtitle == nil {
+		return
+	}
 
-// 	if value < avg {
-// 		*subtitle = "Abaixo" + *subtitle + strconv.Itoa(avg)
-// 	} else if value > avg {
-// 		*subtitle = "Acima" + *subtitle + strconv.Itoa(avg)
-// 	} else {
-// 		*subtitle = "Está na média nacional de " + strconv.Itoa(avg)
-// 	}
-// }
+	if value < avg {
+		*subtitle = "Abaixo" + *subtitle + strconv.Itoa(avg)
+	} else if value > avg {
+		*subtitle = "Acima" + *subtitle + strconv.Itoa(avg)
+	} else {
+		*subtitle = "Está na média nacional de " + strconv.Itoa(avg)
+	}
+}
 
-// func tempLoadData(v1 int, v2 int, sub1 *string, sub2 *string) {
-// 	auxLoadSubtitles(v1, 0, sub1)
-// 	auxLoadSubtitles(v2, 0, sub2)
-// }
+func tempLoadData(v1 int, sub1 *string) {
+	auxLoadSubtitles(v1, 0, sub1)
+}
 
 func (r *externalVegetalCoverRepository) LoadCoverData(city string, year string) ([]CoverDataItem, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
@@ -129,16 +128,20 @@ func (r *externalVegetalCoverRepository) LoadCoverData(city string, year string)
 
 	coverProps := filtered.Properties.(CoverProperties)
 
+	fmt.Println(coverProps)
+
 	avg_cover_value := int(math.Round(coverProps.B1h1))
 	cover_max_value := int(math.Round(coverProps.B1h4))
 	cover_min_value := int(math.Round(coverProps.B1h3))
 
 	var avg_cover_subtitle string = " da média nacional de "
+	var area_cover_subtitle string = "* Um campo equivale à 6.400 metros quadrados"
 
-	// tempLoadData(heat_island_value, avg_temp_value, &heat_island_subtitle, &avg_temp_subtitle)
+	tempLoadData(avg_cover_value, &avg_cover_subtitle)
 
 	result := []CoverDataItem{
-		{"Média da cobertura vegetal", &avg_cover_subtitle, strconv.Itoa(avg_cover_value) + "%"},
+		{"A área vegetada é igual a", &area_cover_subtitle, "X campos de futebol*"},
+		{"Média da cobertura vegetal", &avg_cover_subtitle, strconv.Itoa(avg_cover_value/100) + "%"},
 		{"A cobertura vegetal na cidade varia entre", nil, strconv.Itoa(cover_min_value) + "% a " + strconv.Itoa(cover_max_value) + "%"},
 	}
 
