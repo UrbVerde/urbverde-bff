@@ -70,23 +70,9 @@ func (r *externalWeatherTemperatureRepository) LoadYears(city string) ([]int, er
 	return cards_shared.LoadYears(url, processProperties)
 }
 
-func auxLoadSubtitles(value int, avg int, subtitle *string) {
-	if subtitle == nil {
-		return
-	}
-
-	if value < avg {
-		*subtitle = "Abaixo" + *subtitle + strconv.Itoa(avg)
-	} else if value > avg {
-		*subtitle = "Acima" + *subtitle + strconv.Itoa(avg)
-	} else {
-		*subtitle = "Está na média nacional de " + strconv.Itoa(avg)
-	}
-}
-
 func tempLoadData(v1 int, v2 int, sub1 *string, sub2 *string) {
-	auxLoadSubtitles(v1, 0, sub1)
-	auxLoadSubtitles(v2, 0, sub2)
+	cards_shared.AuxLoadSubtitles(v1, 0, sub1)
+	cards_shared.AuxLoadSubtitles(v2, 0, sub2)
 }
 
 func (r *externalWeatherTemperatureRepository) LoadTemperatureData(city string, year string) ([]TemperatureDataItem, error) {

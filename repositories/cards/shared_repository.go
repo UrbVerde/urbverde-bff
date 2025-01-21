@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strconv"
 )
 
 const (
@@ -86,4 +87,18 @@ func LoadYears(url string, processProperties func(map[string]interface{}) (int, 
 	sort.Sort(sort.Reverse(sort.IntSlice(years)))
 
 	return years, nil
+}
+
+func AuxLoadSubtitles(value int, avg int, subtitle *string) {
+	if subtitle == nil {
+		return
+	}
+
+	if value < avg {
+		*subtitle = "Abaixo" + *subtitle + strconv.Itoa(avg)
+	} else if value > avg {
+		*subtitle = "Acima" + *subtitle + strconv.Itoa(avg)
+	} else {
+		*subtitle = "Está na média nacional de " + strconv.Itoa(avg)
+	}
 }

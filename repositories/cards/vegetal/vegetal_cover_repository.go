@@ -17,10 +17,10 @@ type VegetalCoverRepository interface {
 
 type CoverProperties struct {
 	Ano  int     `json:"ano"`
-	B1h1 float64 `json:"b1h1"` // Área vegetada em campos de futebol
-	B1h4 float64 `json:"b1h4"` // Variação Max
-	B1h3 float64 `json:"b1h3"` // Variação Min
 	B1   float64 `json:"b1"`   // % da cobertura vegetal
+	B1h1 float64 `json:"b1h1"` // Área vegetada em campos de futebol
+	B1h3 float64 `json:"b1h3"` // Variação Min
+	B1h4 float64 `json:"b1h4"` // Variação Max
 }
 
 // Response JSON structure
@@ -70,22 +70,8 @@ func (r *externalVegetalCoverRepository) LoadYears(city string) ([]int, error) {
 	return cards_shared.LoadYears(url, processProperties)
 }
 
-func auxLoadSubtitles(value int, avg int, subtitle *string) {
-	if subtitle == nil {
-		return
-	}
-
-	if value < avg {
-		*subtitle = "Abaixo" + *subtitle + strconv.Itoa(avg)
-	} else if value > avg {
-		*subtitle = "Acima" + *subtitle + strconv.Itoa(avg)
-	} else {
-		*subtitle = "Está na média nacional de " + strconv.Itoa(avg)
-	}
-}
-
-func tempLoadData(v1 int, sub1 *string) {
-	auxLoadSubtitles(v1, 0, sub1) // a media nacional deve ser incluida posteriormente
+func tempLoadCoverData(v1 int, sub1 *string) {
+	cards_shared.AuxLoadSubtitles(v1, 0, sub1) // a media nacional deve ser incluida posteriormente
 }
 
 func (r *externalVegetalCoverRepository) LoadCoverData(city string, year string) ([]CoverDataItem, error) {
@@ -136,7 +122,7 @@ func (r *externalVegetalCoverRepository) LoadCoverData(city string, year string)
 	var avg_cover_subtitle string = " da média nacional de "
 	var futebol_cover_subtitle string = "* Um campo equivale à 6.400 metros quadrados"
 
-	tempLoadData(avg_cover_value, &avg_cover_subtitle)
+	tempLoadCoverData(avg_cover_value, &avg_cover_subtitle)
 
 	result := []CoverDataItem{
 		{"A área vegetada é igual a", &futebol_cover_subtitle, strconv.Itoa(futebol_cover_value) + " campos de futebol*"},

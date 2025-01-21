@@ -45,6 +45,7 @@ func SetupCardsRoutes(rg *gin.RouterGroup) {
 
 	// Vegetal
 	setupCoverRoutes(rg)
+	setupInequalityRoutes(rg)
 }
 
 // @Summary Retorna dados de temperatura
@@ -124,4 +125,12 @@ func setupCoverRoutes(rg *gin.RouterGroup) {
 	coverController := controllers_cards_vegetal.NewVegetalCoverController(coverService)
 
 	rg.GET("/cards/vegetal/cover", coverController.LoadCoverData)
+}
+
+func setupInequalityRoutes(rg *gin.RouterGroup) {
+	inequalityRepo := repositories_cards_vegetal.NewExternalVegetalInequalityRepository()
+	inequalityService := services_cards_vegetal.NewVegetalInequalityService(inequalityRepo)
+	inequalityController := controllers_cards_vegetal.NewVegetalInequalityController(inequalityService)
+
+	rg.GET("/cards/vegetal/inequality", inequalityController.LoadInequalityData)
 }
