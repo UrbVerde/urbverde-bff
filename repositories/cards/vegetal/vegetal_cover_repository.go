@@ -17,10 +17,10 @@ type VegetalCoverRepository interface {
 
 type CoverProperties struct {
 	Ano  int     `json:"ano"`
-	B1h1 float64 `json:"b1h1"` // % da cobertura vegetal
+	B1h1 float64 `json:"b1h1"` // Área vegetada em campos de futebol
 	B1h4 float64 `json:"b1h4"` // Variação Max
 	B1h3 float64 `json:"b1h3"` // Variação Min
-	// C2   float64 `json:"c2"`   // Área vegetada
+	B1   float64 `json:"b1"`   // % da cobertura vegetal
 }
 
 // Response JSON structure
@@ -85,7 +85,7 @@ func auxLoadSubtitles(value int, avg int, subtitle *string) {
 }
 
 func tempLoadData(v1 int, sub1 *string) {
-	auxLoadSubtitles(v1, 0, sub1)
+	auxLoadSubtitles(v1, 0, sub1) // a media nacional deve ser incluida posteriormente
 }
 
 func (r *externalVegetalCoverRepository) LoadCoverData(city string, year string) ([]CoverDataItem, error) {
@@ -128,20 +128,19 @@ func (r *externalVegetalCoverRepository) LoadCoverData(city string, year string)
 
 	coverProps := filtered.Properties.(CoverProperties)
 
-	fmt.Println(coverProps)
-
-	avg_cover_value := int(math.Round(coverProps.B1h1))
+	avg_cover_value := int(coverProps.B1 * 100)
+	futebol_cover_value := int(math.Round(coverProps.B1h1))
 	cover_max_value := int(math.Round(coverProps.B1h4))
 	cover_min_value := int(math.Round(coverProps.B1h3))
 
 	var avg_cover_subtitle string = " da média nacional de "
-	var area_cover_subtitle string = "* Um campo equivale à 6.400 metros quadrados"
+	var futebol_cover_subtitle string = "* Um campo equivale à 6.400 metros quadrados"
 
 	tempLoadData(avg_cover_value, &avg_cover_subtitle)
 
 	result := []CoverDataItem{
-		{"A área vegetada é igual a", &area_cover_subtitle, "X campos de futebol*"},
-		{"Média da cobertura vegetal", &avg_cover_subtitle, strconv.Itoa(avg_cover_value/100) + "%"},
+		{"A área vegetada é igual a", &futebol_cover_subtitle, strconv.Itoa(futebol_cover_value) + " campos de futebol*"},
+		{"Média da cobertura vegetal", &avg_cover_subtitle, strconv.Itoa(avg_cover_value) + "%"},
 		{"A cobertura vegetal na cidade varia entre", nil, strconv.Itoa(cover_min_value) + "% a " + strconv.Itoa(cover_max_value) + "%"},
 	}
 
