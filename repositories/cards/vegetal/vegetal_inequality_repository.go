@@ -68,9 +68,9 @@ func (r *externalVegetalInequalityRepository) LoadYears(city string) ([]int, err
 	return cards_shared.LoadYears(url, processProperties)
 }
 
-// func tempLoadInequalityData(v1 int, sub1 *string) {
-// 	cards_shared.AuxLoadSubtitles(v1, 0, sub1) // a media nacional deve ser incluida posteriormente
-// }
+func tempLoadInequalityData(v1 int, sub1 *string) {
+	cards_shared.AuxLoadSubtitles(v1, 0, sub1) // a media nacional deve ser incluida posteriormente
+}
 
 func (r *externalVegetalInequalityRepository) LoadInequalityData(city string, year string) ([]InequalityDataItem, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
@@ -119,12 +119,12 @@ func (r *externalVegetalInequalityRepository) LoadInequalityData(city string, ye
 	var environmental_inequality_subtitle string = " da média nacional de "
 	var vegetation_vigor_subtitle string = "Indica a média da saúde da vegetação"
 
-	// tempLoadInequalityData(avg_inequality_value, &avg_inequality_subtitle)
+	tempLoadInequalityData(environmental_inequality_value, &environmental_inequality_subtitle)
 
 	result := []InequalityDataItem{
 		{"Moradores em áreas de pouca vegetação", &residents_inequality_subtitle, strconv.Itoa(residents_inequality_value) + "%"},
 		{"Desigualdade ambiental e social (IDSA)", &environmental_inequality_subtitle, strconv.Itoa(environmental_inequality_value)},
-		{"Vigor da vegetação (NDVI)", &vegetation_vigor_subtitle, "%"},
+		{"Vigor da vegetação (NDVI)", &vegetation_vigor_subtitle, "*Dado em construção*"},
 	}
 
 	return result, nil
