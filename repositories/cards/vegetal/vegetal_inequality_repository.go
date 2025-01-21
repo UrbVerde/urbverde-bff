@@ -2,7 +2,6 @@ package repositories_cards_vegetal
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"strconv"
 	cards_shared "urbverde-api/repositories/cards"
@@ -112,9 +111,8 @@ func (r *externalVegetalInequalityRepository) LoadInequalityData(city string, ye
 	}
 
 	inequalityProps := filtered.Properties.(InequalityProperties)
-
 	residents_inequality_value := int(inequalityProps.B3h2)
-	environmental_inequality_value := int(math.Round(inequalityProps.B3))
+	environmental_inequality_value := int(inequalityProps.B3 * 100)
 	// vegetation_vigor_value := int(math.Round(inequalityProps.B1h4))
 
 	var residents_inequality_subtitle = "Porcentagem vivendo nas regiões menos vegetadas"
