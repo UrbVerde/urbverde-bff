@@ -18,13 +18,13 @@ type InequalityProperties struct {
 	Ano  int     `json:"ano"`
 	B3h2 float64 `json:"b3h2"` // % moradores pouca vegetação
 	B3   float64 `json:"b3"`   // Desigualdade ambiental e social
-	// B1h3 float64 `json:"b1h3"` // Vigor
+	// X float64 `json:"x"` // Vigor
 }
 
 // Response JSON structure
 type InequalityDataItem struct {
 	Title    string  `json:"title"`
-	Subtitle *string `json:"subtitle,omitempty"` // Omitir caso seja nil
+	Subtitle *string `json:"subtitle,omitempty"`
 	Value    string  `json:"value"`
 }
 

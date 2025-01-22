@@ -40,12 +40,13 @@ func SetupCardsRoutes(rg *gin.RouterGroup) {
 	// Weather
 	setupTemperatureRoutes(rg)
 	setupHeatRoutes(rg)
-	setupRankingRoutes(rg)
+	setupRankingWeatherRoutes(rg)
 	setupInfoRoutes(rg)
 
 	// Vegetal
 	setupCoverRoutes(rg)
 	setupInequalityRoutes(rg)
+	setupRankingVegetalRoutes(rg)
 }
 
 // @Summary Retorna dados de temperatura
@@ -94,7 +95,7 @@ func setupHeatRoutes(rg *gin.RouterGroup) {
 // @Success 200 {object} []RankingData
 // @Failure 400 {object} ErrorResponse
 // @Router /cards/weather/ranking [get]
-func setupRankingRoutes(rg *gin.RouterGroup) {
+func setupRankingWeatherRoutes(rg *gin.RouterGroup) {
 	rankRepo := repositories_cards_weather.NewExternalWeatherRankingRepository()
 	rankService := services_cards_weather.NewWeatherRankingService(rankRepo)
 	rankController := controllers_cards_weather.NewWeatherRankingController(rankService)
@@ -133,4 +134,12 @@ func setupInequalityRoutes(rg *gin.RouterGroup) {
 	inequalityController := controllers_cards_vegetal.NewVegetalInequalityController(inequalityService)
 
 	rg.GET("/cards/vegetal/inequality", inequalityController.LoadInequalityData)
+}
+
+func setupRankingVegetalRoutes(rg *gin.RouterGroup) {
+	rankRepo := repositories_cards_vegetal.NewExternalVegetalRankingRepository()
+	rankService := services_cards_vegetal.NewVegetalRankingService(rankRepo)
+	rankController := controllers_cards_vegetal.NewVegetalRankingController(rankService)
+
+	rg.GET("/cards/vegetal/ranking", rankController.LoadRankingData)
 }

@@ -26,7 +26,7 @@ type CoverProperties struct {
 // Response JSON structure
 type CoverDataItem struct {
 	Title    string  `json:"title"`
-	Subtitle *string `json:"subtitle,omitempty"` // Omitir caso seja nil
+	Subtitle *string `json:"subtitle,omitempty"`
 	Value    string  `json:"value"`
 }
 
