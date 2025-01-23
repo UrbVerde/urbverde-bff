@@ -9,7 +9,15 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.urbverde.com.br/",
+            "email": "comunica.urbverde@usp.br"
+        },
+        "license": {
+            "name": "???",
+            "url": "???"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -419,6 +427,44 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/categories": {
+            "get": {
+                "description": "Retorna as categorias e camadas disponíveis para o município",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Retorna categorias disponíveis",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código do município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/repositories_categories.CategoriesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers_categories.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -503,6 +549,67 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "controllers_categories.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Erro ao processar a solicitação"
+                }
+            }
+        },
+        "repositories_categories.CategoriesResponse": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repositories_categories.Category"
+                    }
+                }
+            }
+        },
+        "repositories_categories.Category": {
+            "type": "object",
+            "properties": {
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repositories_categories.Layer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "repositories_categories.Layer": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "isNew": {
+                    "type": "boolean"
+                },
+                "name": {
                     "type": "string"
                 }
             }

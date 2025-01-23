@@ -1,5 +1,5 @@
-// urbverde-bff/repositories/address_repository_test.go
-package repositories
+// urbverde-bff/repositories/address/address_repository_test.go
+package repositories_address
 
 import (
 	"net/http"
