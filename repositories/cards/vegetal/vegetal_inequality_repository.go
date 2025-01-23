@@ -21,7 +21,6 @@ type InequalityProperties struct {
 	// X float64 `json:"x"` // Vigor
 }
 
-// Response JSON structure
 type InequalityDataItem struct {
 	Title    string  `json:"title"`
 	Subtitle *string `json:"subtitle,omitempty"`
