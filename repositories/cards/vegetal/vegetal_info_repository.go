@@ -18,7 +18,7 @@ type InfoProperties struct {
 	Ano int     `json:"ano"`
 	C2  float64 `json:"c2"` // Temperatura média da superfície (temperature)
 	A1  float64 `json:"a1"` // Moradores prox a praças (square)
-	// A4  float64 `json:"a4"` // Distancia média até as praças (square)
+	A4  float64 `json:"a4"` // Distancia média até as praças (square)
 }
 
 type InfoDataItem struct {
@@ -126,16 +126,16 @@ func (r *externalVegetalInfoRepository) LoadInfoData(city string) ([]InfoDataIte
 
 	latestC2, foundC2 := findLatestNonZero(data.Features, "c2")
 	latestA1, foundA1 := findLatestNonZero(data.Features, "a1")
-	// latestA4, foundA4 := findLatestNonZero(data.Features, "a4")
+	latestA4, foundA4 := findLatestNonZero(data.Features, "a4")
 
-	if !foundC2 && !foundA1 {
+	if !foundC2 && !foundA1 && !foundA4 {
 		return nil, fmt.Errorf("nenhum dado válido encontrado")
 	}
 
 	result := []InfoDataItem{
 		{"Temperatura média da superfície", strconv.Itoa(int(latestC2)) + "°C"},
 		{"Moradores próximos a praças", strconv.Itoa(int(latestA1)) + "%"},
-		// {"Distancia média até as praças", strconv.Itoa(int(latestA4)) + " metros"},
+		{"Distancia média até as praças", strconv.Itoa(int(latestA4)) + " metros"},
 	}
 
 	return result, nil
