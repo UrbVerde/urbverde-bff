@@ -37,13 +37,18 @@ type ErrorResponse struct {
 }
 
 func SetupCardsRoutes(rg *gin.RouterGroup) {
-  // Weather
+	SetupWeatherRoutes(rg)
+	SetupVegetalRoutes(rg)
+}
+
+func SetupWeatherRoutes(rg *gin.RouterGroup) {
 	setupTemperatureRoutes(rg)
 	setupHeatRoutes(rg)
 	setupRankingWeatherRoutes(rg)
 	setupWeatherInfoRoutes(rg)
+}
 
-	// Vegetal
+func SetupVegetalRoutes(rg *gin.RouterGroup) {
 	setupCoverRoutes(rg)
 	setupInequalityRoutes(rg)
 	setupRankingVegetalRoutes(rg)

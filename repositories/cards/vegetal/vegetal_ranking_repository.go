@@ -14,10 +14,6 @@ type VegetalRankingRepository interface {
 	LoadRankingData(city string, year string) ([]RankingData, error)
 }
 
-// RankingProperties represents the properties used for ranking
-// B1 - PCV
-// B2 - ICV
-// B3 - IDSA
 type RankingProperties struct {
 	Ano          int    `json:"ano"`
 	NMMicro      string `json:"nm_micro"`     // Microregion name
@@ -43,7 +39,6 @@ type RankingDataItem struct {
 	Of     int    `json:"of"`
 }
 
-// Response JSON structure
 type RankingData struct {
 	Title    string            `json:"title"`
 	Subtitle string            `json:"subtitle"`
