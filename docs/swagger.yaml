@@ -137,6 +137,129 @@ paths:
       summary: Retorna sugestões de endereço
       tags:
       - address
+  /cards/vegetal/cover:
+    get:
+      consumes:
+      - application/json
+      description: Retorna dados relacionados à cobertura vegetal para o município
+        fornecido
+      parameters:
+      - description: Código de município
+        in: query
+        name: city
+        required: true
+        type: string
+      - description: Ano dos dados
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/cards.CardsDataItem'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/cards.ErrorResponse'
+      summary: Retorna dados relacionados à cobertura vegetal
+      tags:
+      - cards/vegetal
+  /cards/vegetal/inequality:
+    get:
+      consumes:
+      - application/json
+      description: Retorna dados relacionados à desigualdade ambiental e a vegetação
+        para o município fornecido
+      parameters:
+      - description: Código de município
+        in: query
+        name: city
+        required: true
+        type: string
+      - description: Ano dos dados
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/cards.CardsDataItem'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/cards.ErrorResponse'
+      summary: Retorna dados relacionados à desigualdade ambiental e a vegetação
+      tags:
+      - cards/vegetal
+  /cards/vegetal/info:
+    get:
+      consumes:
+      - application/json
+      description: Retorna dados adicionais para a camada
+      parameters:
+      - description: Código de município
+        in: query
+        name: city
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/cards.CardsDataItem'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/cards.ErrorResponse'
+      summary: Retorna dados adicionais para a vegetação
+      tags:
+      - cards/vegetal
+  /cards/vegetal/ranking:
+    get:
+      consumes:
+      - application/json
+      description: Retorna dados para a construção do ranking de desigualdade ambiental
+        e a vegetação
+      parameters:
+      - description: Código de município
+        in: query
+        name: city
+        required: true
+        type: string
+      - description: Ano dos dados
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/cards.RankingData'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/cards.ErrorResponse'
+      summary: Retorna dados de ranking
+      tags:
+      - cards/vegetal
   /cards/weather/heat:
     get:
       consumes:
