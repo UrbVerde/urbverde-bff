@@ -35,7 +35,6 @@ type ErrorResponse struct {
 	Code    int    `json:"code" example:"400"`
 }
 
-// SetupCardsRoutes
 func SetupCardsRoutes(rg *gin.RouterGroup) {
 	// Weather
 	setupTemperatureRoutes(rg)
