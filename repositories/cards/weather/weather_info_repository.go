@@ -110,7 +110,6 @@ func (r *externalWeatherInfoRepository) LoadInfoData(city string) ([]InfoDataIte
 
 	data = sortGeneralData(data)
 
-	// busca o valor mais recente != 0
 	findLatestNonZero := func(features []cards_shared.Feature, key string) (float64, bool) {
 		for _, feature := range features {
 			props, ok := feature.Properties.(map[string]interface{})

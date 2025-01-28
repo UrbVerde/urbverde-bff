@@ -134,7 +134,7 @@ func (r *externalSquareInfoRepository) LoadInfoData(city string) ([]InfoDataItem
 
 	result := []InfoDataItem{
 		{"Temperatura média da superfície", strconv.Itoa(int(latestC2)) + "°C"},
-		{"Média da cobertura vegetal", strconv.Itoa(int(latestB1h1)) + "%"},
+		{"Média da cobertura vegetal", strconv.FormatFloat(latestB1h1, 'f', 2, 64) + "%"},
 		{"Desigualdade ambiental e social", strconv.Itoa(int(latestB3))},
 	}
 

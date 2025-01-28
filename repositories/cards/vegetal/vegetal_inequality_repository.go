@@ -115,14 +115,14 @@ func (r *externalVegetalInequalityRepository) LoadInequalityData(city string, ye
 	// vegetation_vigor_value := int(math.Round(inequalityProps.B1h4))
 
 	var residents_inequality_subtitle = "Porcentagem vivendo nas regiões menos vegetadas"
-	var environmental_inequality_subtitle string = " da média nacional de "
+	// var environmental_inequality_subtitle string = " da média nacional de "
 	// var vegetation_vigor_subtitle string = "Indica a média da saúde da vegetação"
 
-	tempLoadInequalityData(environmental_inequality_value, &environmental_inequality_subtitle)
+	// tempLoadInequalityData(environmental_inequality_value, &environmental_inequality_subtitle)
 
 	result := []InequalityDataItem{
 		{"Moradores em áreas de pouca vegetação", &residents_inequality_subtitle, strconv.Itoa(residents_inequality_value) + "%"},
-		{"Desigualdade ambiental e social (IDSA)", &environmental_inequality_subtitle, strconv.Itoa(environmental_inequality_value)},
+		{"Desigualdade ambiental e social (IDSA)", nil, strconv.Itoa(environmental_inequality_value)},
 		// {"Vigor da vegetação (NDVI)", &vegetation_vigor_subtitle, "*Dado em construção*"},
 	}
 

@@ -22,7 +22,6 @@ type SquareInequalityProperties struct {
 	H9a  float64 `json:"h9a"`  // Idosos
 }
 
-// Response JSON structure
 type SquareInequalityDataItem struct {
 	Title    string  `json:"title"`
 	Subtitle *string `json:"subtitle,omitempty"`
