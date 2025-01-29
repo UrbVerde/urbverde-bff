@@ -10,6 +10,10 @@ import (
 	repositories_cards_vegetal "urbverde-api/repositories/cards/vegetal"
 	services_cards_vegetal "urbverde-api/services/cards/vegetal"
 
+	controllers_cards_square "urbverde-api/controllers/cards/square"
+	repositories_cards_square "urbverde-api/repositories/cards/square"
+	services_cards_square "urbverde-api/services/cards/square"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -39,20 +43,28 @@ type ErrorResponse struct {
 func SetupCardsRoutes(rg *gin.RouterGroup) {
 	SetupWeatherRoutes(rg)
 	SetupVegetalRoutes(rg)
+	SetupSquareRoutes(rg)
 }
 
 func SetupWeatherRoutes(rg *gin.RouterGroup) {
 	setupTemperatureRoutes(rg)
 	setupHeatRoutes(rg)
-	setupRankingWeatherRoutes(rg)
+	setupWeatherRankingRoutes(rg)
 	setupWeatherInfoRoutes(rg)
 }
 
 func SetupVegetalRoutes(rg *gin.RouterGroup) {
 	setupCoverRoutes(rg)
-	setupInequalityRoutes(rg)
-	setupRankingVegetalRoutes(rg)
+	setupVegetalInequalityRoutes(rg)
+	setupVegetalRankingRoutes(rg)
 	setupVegetalInfoRoutes(rg)
+}
+
+func SetupSquareRoutes(rg *gin.RouterGroup) {
+	setupSquareParksRoutes(rg)
+	setupSquareInequalityRoutes(rg)
+	setupSquareRankingRoutes(rg)
+	setupSquareInfoRoutes(rg)
 }
 
 // @Summary Retorna dados de temperatura
@@ -101,7 +113,7 @@ func setupHeatRoutes(rg *gin.RouterGroup) {
 // @Success 200 {object} []RankingData
 // @Failure 400 {object} ErrorResponse
 // @Router /cards/weather/ranking [get]
-func setupRankingWeatherRoutes(rg *gin.RouterGroup) {
+func setupWeatherRankingRoutes(rg *gin.RouterGroup) {
 	rankRepo := repositories_cards_weather.NewExternalWeatherRankingRepository()
 	rankService := services_cards_weather.NewWeatherRankingService(rankRepo)
 	rankController := controllers_cards_weather.NewWeatherRankingController(rankService)
@@ -154,7 +166,7 @@ func setupCoverRoutes(rg *gin.RouterGroup) {
 // @Success 200 {object} []CardsDataItem
 // @Failure 400 {object} ErrorResponse
 // @Router /cards/vegetal/inequality [get]
-func setupInequalityRoutes(rg *gin.RouterGroup) {
+func setupVegetalInequalityRoutes(rg *gin.RouterGroup) {
 	inequalityRepo := repositories_cards_vegetal.NewExternalVegetalInequalityRepository()
 	inequalityService := services_cards_vegetal.NewVegetalInequalityService(inequalityRepo)
 	inequalityController := controllers_cards_vegetal.NewVegetalInequalityController(inequalityService)
@@ -172,7 +184,7 @@ func setupInequalityRoutes(rg *gin.RouterGroup) {
 // @Success 200 {object} []RankingData
 // @Failure 400 {object} ErrorResponse
 // @Router /cards/vegetal/ranking [get]
-func setupRankingVegetalRoutes(rg *gin.RouterGroup) {
+func setupVegetalRankingRoutes(rg *gin.RouterGroup) {
 	rankRepo := repositories_cards_vegetal.NewExternalVegetalRankingRepository()
 	rankService := services_cards_vegetal.NewVegetalRankingService(rankRepo)
 	rankController := controllers_cards_vegetal.NewVegetalRankingController(rankService)
@@ -195,4 +207,73 @@ func setupVegetalInfoRoutes(rg *gin.RouterGroup) {
 	infoController := controllers_cards_vegetal.NewVegetalInfoController(infoService)
 
 	rg.GET("/cards/vegetal/info", infoController.LoadInfoData)
+}
+
+// @Summary Retorna dados dos parques e praças
+// @Description Retorna dados de parques e praças para a camada
+// @Tags cards/square
+// @Accept json
+// @Produce json
+// @Param city query string true "Código de município"
+// @Success 200 {object} []CardsDataItem
+// @Failure 400 {object} ErrorResponse
+// @Router /cards/square/parks [get]
+func setupSquareParksRoutes(rg *gin.RouterGroup) {
+	parksRepo := repositories_cards_square.NewExternalSquareParksRepository()
+	parksService := services_cards_square.NewSquareParksService(parksRepo)
+	parksController := controllers_cards_square.NewSquareParksController(parksService)
+
+	rg.GET("/cards/square/parks", parksController.LoadParksData)
+}
+
+// @Summary Retorna dados sobre desigualdade
+// @Description Retorna dados de desigualdade para a camada
+// @Tags cards/square
+// @Accept json
+// @Produce json
+// @Param city query string true "Código de município"
+// @Success 200 {object} []CardsDataItem
+// @Failure 400 {object} ErrorResponse
+// @Router /cards/square/inequality [get]
+func setupSquareInequalityRoutes(rg *gin.RouterGroup) {
+	inequalityRepo := repositories_cards_square.NewExternalSquareInequalityRepository()
+	inequalityService := services_cards_square.NewSquareInequalityService(inequalityRepo)
+	inequalityController := controllers_cards_square.NewSquareInequalityController(inequalityService)
+
+	rg.GET("/cards/square/inequality", inequalityController.LoadInequalityData)
+}
+
+// @Summary Retorna dados de ranking
+// @Description Retorna dados para a construção do ranking de praças e parques
+// @Tags cards/square
+// @Accept json
+// @Produce json
+// @Param city query string true "Código de município"
+// @Param year query string false "Ano dos dados"
+// @Success 200 {object} []RankingData
+// @Failure 400 {object} ErrorResponse
+// @Router /cards/square/ranking [get]
+func setupSquareRankingRoutes(rg *gin.RouterGroup) {
+	rankRepo := repositories_cards_square.NewExternalSquareRankingRepository()
+	rankService := services_cards_square.NewSquareRankingService(rankRepo)
+	rankController := controllers_cards_square.NewSquareRankingController(rankService)
+
+	rg.GET("/cards/square/ranking", rankController.LoadRankingData)
+}
+
+// @Summary Retorna dados adicionais para a camada de praças e parques
+// @Description Retorna dados adicionais para a camada
+// @Tags cards/square
+// @Accept json
+// @Produce json
+// @Param city query string true "Código de município"
+// @Success 200 {object} []CardsDataItem
+// @Failure 400 {object} ErrorResponse
+// @Router /cards/square/info [get]
+func setupSquareInfoRoutes(rg *gin.RouterGroup) {
+	squareRepo := repositories_cards_vegetal.NewExternalVegetalInfoRepository()
+	squareService := services_cards_vegetal.NewVegetalInfoService(squareRepo)
+	squareController := controllers_cards_vegetal.NewVegetalInfoController(squareService)
+
+	rg.GET("/cards/square/info", squareController.LoadInfoData)
 }

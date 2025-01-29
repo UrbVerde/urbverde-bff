@@ -58,6 +58,176 @@
                 }
             }
         },
+        "/cards/square/inequality": {
+            "get": {
+                "description": "Retorna dados de desigualdade para a camada",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/square"
+                ],
+                "summary": "Retorna dados sobre desigualdade",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/square/info": {
+            "get": {
+                "description": "Retorna dados adicionais para a camada",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/square"
+                ],
+                "summary": "Retorna dados adicionais para a camada de praças e parques",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/square/parks": {
+            "get": {
+                "description": "Retorna dados de parques e praças para a camada",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/square"
+                ],
+                "summary": "Retorna dados dos parques e praças",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/square/ranking": {
+            "get": {
+                "description": "Retorna dados para a construção do ranking de praças e parques",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/square"
+                ],
+                "summary": "Retorna dados de ranking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ano dos dados",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.RankingData"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/cards/vegetal/cover": {
             "get": {
                 "description": "Retorna dados relacionados à cobertura vegetal para o município fornecido",

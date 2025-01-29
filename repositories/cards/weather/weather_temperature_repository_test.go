@@ -44,8 +44,8 @@ func TestLoadTemperatureData(t *testing.T) {
 		assert.NoError(t, err)
 
 		expected := []TemperatureDataItem{
-			{"Nível de ilha de calor", utils.StringPtr("Acima da média nacional de 0"), "2"},
-			{"Temperatura média da superfície", utils.StringPtr("Acima da média nacional de 0"), "32°C"},
+			{"Nível de ilha de calor", nil, "2"},
+			{"Temperatura média da superfície", nil, "32°C"},
 			{"Maior amplitude", utils.StringPtr("É a diferença entre a temperatura mais quente e a mais fria"), "9°C"},
 			{"Temperatura máxima da superfície", nil, "42°C"},
 		}

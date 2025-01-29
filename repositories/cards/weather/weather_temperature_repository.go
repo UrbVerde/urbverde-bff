@@ -27,7 +27,7 @@ type TemperatureProperties struct {
 // Response JSON structure
 type TemperatureDataItem struct {
 	Title    string  `json:"title"`
-	Subtitle *string `json:"subtitle,omitempty"` // Omitir caso seja nil
+	Subtitle *string `json:"subtitle,omitempty"`
 	Value    string  `json:"value"`
 }
 
@@ -116,27 +116,20 @@ func (r *externalWeatherTemperatureRepository) LoadTemperatureData(city string, 
 
 	temperatureProps := filtered.Properties.(TemperatureProperties)
 
-	// Values
 	heat_island_value := int(math.Round(temperatureProps.C1))
 	avg_temp_value := int(math.Round(temperatureProps.C2))
 	amplitude_value := temperatureProps.H5b
 	max_temp_value := int(math.Round(temperatureProps.C3))
 
-	// Result
-	// Nível de ilha de calor
-	// Temperatura média da superfície
-	// Maior amplitude
-	// Temperatura máxima da superfície
-
-	var heat_island_subtitle string = " da média nacional de "
-	var avg_temp_subtitle string = " da média nacional de "
+	// var heat_island_subtitle string = " da média nacional de " // deve ser adicionado junto do dado nacional
+	// var avg_temp_subtitle string = " da média nacional de "
 	var amplitude_subtitle string = "É a diferença entre a temperatura mais quente e a mais fria"
 
-	tempLoadData(heat_island_value, avg_temp_value, &heat_island_subtitle, &avg_temp_subtitle)
+	// tempLoadData(heat_island_value, avg_temp_value, &heat_island_subtitle, &avg_temp_subtitle)
 
 	result := []TemperatureDataItem{
-		{"Nível de ilha de calor", &heat_island_subtitle, strconv.Itoa(heat_island_value)},
-		{"Temperatura média da superfície", &avg_temp_subtitle, strconv.Itoa(avg_temp_value) + "°C"},
+		{"Nível de ilha de calor", nil, strconv.Itoa(heat_island_value)},
+		{"Temperatura média da superfície", nil, strconv.Itoa(avg_temp_value) + "°C"},
 		{"Maior amplitude", &amplitude_subtitle, strconv.Itoa(amplitude_value) + "°C"},
 		{"Temperatura máxima da superfície", nil, strconv.Itoa(max_temp_value) + "°C"},
 	}

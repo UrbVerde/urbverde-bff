@@ -119,14 +119,14 @@ func (r *externalVegetalCoverRepository) LoadCoverData(city string, year string)
 	cover_max_value := int(math.Round(coverProps.B1h4))
 	cover_min_value := int(math.Round(coverProps.B1h3))
 
-	var avg_cover_subtitle string = " da média nacional de "
+	// var avg_cover_subtitle string = " da média nacional de "
 	var futebol_cover_subtitle string = "* Um campo equivale à 6.400 metros quadrados"
 
-	tempLoadCoverData(avg_cover_value, &avg_cover_subtitle)
+	// tempLoadCoverData(avg_cover_value, &avg_cover_subtitle)
 
 	result := []CoverDataItem{
 		{"A área vegetada é igual a", &futebol_cover_subtitle, strconv.Itoa(futebol_cover_value) + " campos de futebol*"},
-		{"Média da cobertura vegetal", &avg_cover_subtitle, strconv.Itoa(avg_cover_value) + "%"},
+		{"Média da cobertura vegetal", nil, strconv.Itoa(avg_cover_value) + "%"},
 		{"A cobertura vegetal na cidade varia entre", nil, strconv.Itoa(cover_min_value) + "% a " + strconv.Itoa(cover_max_value) + "%"},
 	}
 
