@@ -38,9 +38,14 @@ WORKDIR /app
 # Copy the binary and docs
 COPY --from=builder /app/urbverde-bff .
 COPY --from=builder /app/docs /app/docs_source
+COPY --from=builder /app/repositories/address/data /app/repositories/address/data
+COPY --from=builder /app/repositories/categories/data /app/repositories/categories/data
 
-# Ensure both directories exist and have correct permissions
-RUN mkdir -p /app/docs && chmod -R 777 /app/docs && chmod -R 777 /app/docs_source
+# Ensure directories exist and have correct permissions
+RUN mkdir -p /app/docs && \
+    chmod -R 777 /app/docs && \
+    chmod -R 777 /app/docs_source && \
+    chmod -R 755 /app/repositories
 
 EXPOSE 8080
 

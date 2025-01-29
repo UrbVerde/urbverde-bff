@@ -1,19 +1,5 @@
 basePath: /v1
 definitions:
-  address.AddressSuggestion:
-    properties:
-      address:
-        type: string
-      id:
-        type: integer
-    type: object
-  address.ErrorResponse:
-    properties:
-      code:
-        type: integer
-      message:
-        type: string
-    type: object
   cards.CardsDataItem:
     properties:
       subtitle:
@@ -57,6 +43,15 @@ definitions:
       type:
         type: string
     type: object
+  controllers_address.ErrorResponse:
+    properties:
+      error:
+        example: MISSING_PARAMETERS
+        type: string
+      message:
+        example: Erro ao processar a solicitação
+        type: string
+    type: object
   controllers_categories.ErrorResponse:
     properties:
       code:
@@ -64,6 +59,71 @@ definitions:
         type: integer
       message:
         example: Erro ao processar a solicitação
+        type: string
+    type: object
+  repositories_address.CenterOpts:
+    properties:
+      bbox:
+        example:
+        - -46.8264
+        - -24.0082
+        - -46.3652
+        - -23.3566
+        items:
+          type: number
+        type: array
+      lat:
+        example: -23.5505
+        type: number
+      lng:
+        example: -46.6333
+        type: number
+      zoom:
+        example: 10
+        type: integer
+    type: object
+  repositories_address.CityResponse:
+    description: City suggestion response model
+    properties:
+      cd_mun:
+        description: City ID for internal use
+        example: 3550308
+        type: integer
+      display_name:
+        description: 'What user sees: "City Name - ST"'
+        example: São Paulo - SP
+        type: string
+    type: object
+  repositories_address.Location:
+    description: Detailed location data model
+    properties:
+      center_options:
+        additionalProperties:
+          $ref: '#/definitions/repositories_address.CenterOpts'
+        type: object
+      code:
+        example: "3550308"
+        type: string
+      country:
+        example: Brasil
+        type: string
+      country_code:
+        example: BR
+        type: string
+      display_name:
+        example: São Paulo - SP
+        type: string
+      name:
+        example: São Paulo
+        type: string
+      state:
+        example: SP
+        type: string
+      state_name:
+        example: São Paulo
+        type: string
+      type:
+        example: city
         type: string
     type: object
   repositories_categories.CategoriesResponse:
@@ -110,6 +170,38 @@ info:
   title: UrbVerde BFF
   version: "1.0"
 paths:
+  /address/data:
+    get:
+      consumes:
+      - application/json
+      description: Retorna dados detalhados de localização
+      parameters:
+      - description: Código da localização
+        in: query
+        name: code
+        type: string
+      - description: Nome ou nome de exibição da localização
+        in: query
+        name: name
+        type: string
+      - description: Tipo da localização (state/city/country)
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repositories_address.Location'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers_address.ErrorResponse'
+      summary: Retorna dados de localização
+      tags:
+      - address
   /address/suggestions:
     get:
       consumes:
@@ -128,12 +220,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/address.AddressSuggestion'
+              $ref: '#/definitions/repositories_address.CityResponse'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/address.ErrorResponse'
+            $ref: '#/definitions/controllers_address.ErrorResponse'
       summary: Retorna sugestões de endereço
       tags:
       - address

@@ -16,25 +16,6 @@ type AddressRepository interface {
 	SearchAddress(query string) ([]CityResponse, error)
 }
 
-// IBGEResponse represents the raw response from IBGE API
-type IBGEResponse struct {
-	ID           int    `json:"id"`   // City ID (cd_mun)
-	Nome         string `json:"nome"` // City name
-	Microrregiao struct {
-		Mesorregiao struct {
-			UF struct {
-				Sigla string `json:"sigla"` // State abbreviation
-			} `json:"UF"`
-		} `json:"mesorregiao"`
-	} `json:"microrregiao"`
-}
-
-// CityResponse represents our formatted response
-type CityResponse struct {
-	DisplayName string `json:"display_name"` // What user sees: "City Name - ST"
-	CdMun       int    `json:"cd_mun"`       // City ID for internal use
-}
-
 type externalAddressRepository struct {
 	apiURL string
 }
@@ -67,7 +48,7 @@ func normalizeText(s string) string {
 }
 
 func (r *externalAddressRepository) SearchAddress(query string) ([]CityResponse, error) {
-	url := r.apiURL
+	url := r.apiURL + "?nome=" + query
 
 	resp, err := http.Get(url)
 	if err != nil {
