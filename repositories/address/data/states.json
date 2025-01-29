@@ -1,0 +1,583 @@
+{
+  "urbverde_metadata": {
+    "generated_at": "2025-01-29T11:05:03",
+    "generated_by": "Gustavo - UrbVerde",
+    "generated_through": "https://github.com/UrbVerde/urbverde-data/CenterCoordinates.ipynb"
+  },
+  "metadata": {
+    "url": "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2023/Brasil/BR_UF_2023.zip",
+    "last_modified": "2024-12-15T21:17:54+00:00",
+    "size": 13687267,
+    "file_hash": "9f6f6daf7bb28bd4b4afc7c6c945c385",
+    "crs": "EPSG:4674"
+  },
+  "features": {
+    "11": {
+      "name": "Rondônia",
+      "display_name": "Rondônia",
+      "type": "state",
+      "code": "11",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -10.922164254716701,
+          "lng": -62.839120738139925,
+          "zoom": 5,
+          "bbox": [
+            -67.16204788499995,
+            -13.979591689999943,
+            -59.42256261499998,
+            -7.689976709999944
+          ]
+        }
+      }
+    },
+    "12": {
+      "name": "Acre",
+      "display_name": "Acre",
+      "type": "state",
+      "code": "12",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -9.21692813661136,
+          "lng": -70.46999962372395,
+          "zoom": 5,
+          "bbox": [
+            -74.35879278999995,
+            -11.347248354999925,
+            -66.25525140999996,
+            -6.910137544999933
+          ]
+        }
+      }
+    },
+    "13": {
+      "name": "Amazonas",
+      "display_name": "Amazonas",
+      "type": "state",
+      "code": "13",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -4.168440973949781,
+          "lng": -64.65493406453908,
+          "zoom": 4,
+          "bbox": [
+            -74.68694897269997,
+            -10.421279724999959,
+            -55.20834977329995,
+            2.8498644250000615
+          ]
+        }
+      }
+    },
+    "14": {
+      "name": "Roraima",
+      "display_name": "Roraima",
+      "type": "state",
+      "code": "14",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": 2.084736840929089,
+          "lng": -61.39208194331442,
+          "zoom": 5,
+          "bbox": [
+            -65.12217216499997,
+            -1.9232568099999443,
+            -58.58996593499999,
+            5.614464810000075
+          ]
+        }
+      }
+    },
+    "15": {
+      "name": "Pará",
+      "display_name": "Pará",
+      "type": "state",
+      "code": "15",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -3.9983443292700946,
+          "lng": -53.07267268669083,
+          "zoom": 4,
+          "bbox": [
+            -59.54017357999997,
+            -10.462762524999963,
+            -45.41957961999993,
+            3.2126360250000543
+          ]
+        }
+      }
+    },
+    "16": {
+      "name": "Amapá",
+      "display_name": "Amapá",
+      "type": "state",
+      "code": "16",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": 1.4463942924453386,
+          "lng": -51.96725716859724,
+          "zoom": 6,
+          "bbox": [
+            -55.126278614999954,
+            -1.5234260749999777,
+            -49.62565348499995,
+            4.796066775000044
+          ]
+        }
+      }
+    },
+    "17": {
+      "name": "Tocantins",
+      "display_name": "Tocantins",
+      "type": "state",
+      "code": "17",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -10.16485684012975,
+          "lng": -48.33188461475196,
+          "zoom": 6,
+          "bbox": [
+            -50.99420396499997,
+            -13.883164514999926,
+            -45.44712473499995,
+            -4.753390784999958
+          ]
+        }
+      }
+    },
+    "21": {
+      "name": "Maranhão",
+      "display_name": "Maranhão",
+      "type": "state",
+      "code": "21",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -5.087851035549197,
+          "lng": -45.290561981116376,
+          "zoom": 5,
+          "bbox": [
+            -49.10310477999994,
+            -10.722386529999957,
+            -41.44811501999995,
+            -0.588706269999969
+          ]
+        }
+      }
+    },
+    "22": {
+      "name": "Piauí",
+      "display_name": "Piauí",
+      "type": "state",
+      "code": "22",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -7.400209480956069,
+          "lng": -42.97403326072741,
+          "zoom": 5,
+          "bbox": [
+            -46.31109164999996,
+            -11.337706484999977,
+            -40.08762494999998,
+            -2.340802414999964
+          ]
+        }
+      }
+    },
+    "23": {
+      "name": "Ceará",
+      "display_name": "Ceará",
+      "type": "state",
+      "code": "23",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -5.096723668582284,
+          "lng": -39.61548816676459,
+          "zoom": 6,
+          "bbox": [
+            -41.63206096999994,
+            -8.11187544999994,
+            -37.044115629999965,
+            -2.530630549999972
+          ]
+        }
+      }
+    },
+    "24": {
+      "name": "Rio Grande do Norte",
+      "display_name": "Rio Grande do Norte",
+      "type": "state",
+      "code": "24",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -5.840362922780695,
+          "lng": -36.673266915797825,
+          "zoom": 6,
+          "bbox": [
+            -38.76278072499997,
+            -7.090302469999945,
+            -34.78777177499995,
+            -4.72381372999994
+          ]
+        }
+      }
+    },
+    "25": {
+      "name": "Paraíba",
+      "display_name": "Paraíba",
+      "type": "state",
+      "code": "25",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -7.121664915107442,
+          "lng": -36.83265120619352,
+          "zoom": 6,
+          "bbox": [
+            -38.96422924499998,
+            -8.416807259999967,
+            -34.59446065499995,
+            -5.912059739999923
+          ]
+        }
+      }
+    },
+    "26": {
+      "name": "Pernambuco",
+      "display_name": "Pernambuco",
+      "type": "state",
+      "code": "26",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -8.32687306677957,
+          "lng": -37.99882937881086,
+          "zoom": 5,
+          "bbox": [
+            -41.68591847499994,
+            -9.593394579999957,
+            -34.47910842499993,
+            -7.162456619999922
+          ]
+        }
+      }
+    },
+    "27": {
+      "name": "Alagoas",
+      "display_name": "Alagoas",
+      "type": "state",
+      "code": "27",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -9.514216408973166,
+          "lng": -36.624884700296896,
+          "zoom": 6,
+          "bbox": [
+            -38.391874914999946,
+            -10.584813749999936,
+            -34.99760678499996,
+            -8.72876064999994
+          ]
+        }
+      }
+    },
+    "28": {
+      "name": "Sergipe",
+      "display_name": "Sergipe",
+      "type": "state",
+      "code": "28",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -10.58488875622024,
+          "lng": -37.44386671883293,
+          "zoom": 7,
+          "bbox": [
+            -38.337462409999986,
+            -11.671267584999939,
+            -36.30348738999994,
+            -9.412351914999945
+          ]
+        }
+      }
+    },
+    "29": {
+      "name": "Bahia",
+      "display_name": "Bahia",
+      "type": "state",
+      "code": "29",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -12.499095655610855,
+          "lng": -41.7204766371252,
+          "zoom": 5,
+          "bbox": [
+            -47.03909149499999,
+            -18.83934728499997,
+            -36.87933980499996,
+            -8.042033614999978
+          ]
+        }
+      }
+    },
+    "31": {
+      "name": "Minas Gerais",
+      "display_name": "Minas Gerais",
+      "type": "state",
+      "code": "31",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -18.490914763272706,
+          "lng": -44.6787965731354,
+          "zoom": 4,
+          "bbox": [
+            -51.605544444999964,
+            -23.357234029999947,
+            -39.297366254999986,
+            -13.798701969999925
+          ]
+        }
+      }
+    },
+    "32": {
+      "name": "Espírito Santo",
+      "display_name": "Espírito Santo",
+      "type": "state",
+      "code": "32",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -19.58245831269466,
+          "lng": -40.67284329752293,
+          "zoom": 7,
+          "bbox": [
+            -41.990484754999926,
+            -21.472273869999945,
+            -39.55532554499999,
+            -17.721452729999935
+          ]
+        }
+      }
+    },
+    "33": {
+      "name": "Rio de Janeiro",
+      "display_name": "Rio de Janeiro",
+      "type": "state",
+      "code": "33",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -22.191470938309813,
+          "lng": -42.65488123510908,
+          "zoom": 6,
+          "bbox": [
+            -45.08588958499996,
+            -23.49921832499997,
+            -40.76137191499998,
+            -20.632919174999966
+          ]
+        }
+      }
+    },
+    "35": {
+      "name": "São Paulo",
+      "display_name": "São Paulo",
+      "type": "state",
+      "code": "35",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -22.279656575736933,
+          "lng": -48.72825282840592,
+          "zoom": 5,
+          "bbox": [
+            -53.557548814999954,
+            -25.588954574999953,
+            -43.713927884999976,
+            -19.503022524999942
+          ]
+        }
+      }
+    },
+    "41": {
+      "name": "Paraná",
+      "display_name": "Paraná",
+      "type": "state",
+      "code": "41",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -24.64764166849979,
+          "lng": -51.61537949115164,
+          "zoom": 5,
+          "bbox": [
+            -54.95004709499993,
+            -26.927163339999954,
+            -47.693703604999946,
+            -22.306253859999945
+          ]
+        }
+      }
+    },
+    "42": {
+      "name": "Santa Catarina",
+      "display_name": "Santa Catarina",
+      "type": "state",
+      "code": "42",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -27.254366396541347,
+          "lng": -50.47213102377967,
+          "zoom": 5,
+          "bbox": [
+            -54.111075094999954,
+            -29.525027104999946,
+            -48.08470760499997,
+            -25.785880594999966
+          ]
+        }
+      }
+    },
+    "43": {
+      "name": "Rio Grande do Sul",
+      "display_name": "Rio Grande do Sul",
+      "type": "state",
+      "code": "43",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -29.814329258131156,
+          "lng": -53.24485069544389,
+          "zoom": 5,
+          "bbox": [
+            -58.04766234999995,
+            -34.08462179999998,
+            -49.29343224999995,
+            -26.748858199999972
+          ]
+        }
+      }
+    },
+    "50": {
+      "name": "Mato Grosso do Sul",
+      "display_name": "Mato Grosso do Sul",
+      "type": "state",
+      "code": "50",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -20.350496943674052,
+          "lng": -54.84413236217485,
+          "zoom": 5,
+          "bbox": [
+            -58.53101085999997,
+            -24.41369534999995,
+            -50.560618539999965,
+            -16.821236849999934
+          ]
+        }
+      }
+    },
+    "51": {
+      "name": "Mato Grosso",
+      "display_name": "Mato Grosso",
+      "type": "state",
+      "code": "51",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -12.982835253007815,
+          "lng": -55.90948133040402,
+          "zoom": 4,
+          "bbox": [
+            -62.203811829999964,
+            -18.576226689999952,
+            -49.65437756999998,
+            -6.814399909999949
+          ]
+        }
+      }
+    },
+    "52": {
+      "name": "Goiás",
+      "display_name": "Goiás",
+      "type": "state",
+      "code": "52",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -16.0618307370449,
+          "lng": -49.62901003193017,
+          "zoom": 5,
+          "bbox": [
+            -53.615632754999965,
+            -19.85353321999997,
+            -45.54008494499993,
+            -12.039803779999948
+          ]
+        }
+      }
+    },
+    "53": {
+      "name": "Distrito Federal",
+      "display_name": "Distrito Federal",
+      "type": "state",
+      "code": "53",
+      "country": "Brasil",
+      "country_code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -15.781347582308141,
+          "lng": -47.79685972738741,
+          "zoom": 8,
+          "bbox": [
+            -48.33469943999994,
+            -16.077400289999964,
+            -47.259534359999925,
+            -15.474411309999928
+          ]
+        }
+      }
+    }
+  }
+}

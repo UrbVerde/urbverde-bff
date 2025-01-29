@@ -1,4 +1,4 @@
-// urbverde-bff/controllers/address_controller.go
+// urbverde-bff/controllers/address/address_controller.go
 package controllers_address
 
 import (
@@ -18,6 +18,16 @@ func NewAddressController(service services_address.AddressService) *AddressContr
 	}
 }
 
+// GetSuggestions returns city suggestions based on query
+// @Summary Retorna sugestões de endereço
+// @Description Retorna sugestões baseadas nos dados fornecidos
+// @Tags address
+// @Accept json
+// @Produce json
+// @Param query query string true "Texto para buscar sugestões"
+// @Success 200 {array} repositories_address.CityResponse
+// @Failure 400 {object} ErrorResponse
+// @Router /address/suggestions [get]
 func (ac *AddressController) GetSuggestions(c *gin.Context) {
 	query := c.Query("query")
 
