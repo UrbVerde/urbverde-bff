@@ -1,4 +1,4 @@
-package repositories_cards_vegetal
+package repositories_cards_vegetation
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type VegetalInequalityRepository interface {
+type VegetationInequalityRepository interface {
 	cards_shared.RepositoryBase
 	LoadInequalityData(city string, year string) ([]InequalityDataItem, error)
 }
@@ -27,11 +27,11 @@ type InequalityDataItem struct {
 	Value    string  `json:"value"`
 }
 
-type externalVegetalInequalityRepository struct {
+type externalVegetationInequalityRepository struct {
 	geoserverURL string
 }
 
-func NewExternalVegetalInequalityRepository() VegetalInequalityRepository {
+func NewExternalVegetationInequalityRepository() VegetationInequalityRepository {
 	_ = godotenv.Load()
 
 	geoserverURL := os.Getenv("GEOSERVER_URL")
@@ -48,12 +48,12 @@ func NewExternalVegetalInequalityRepository() VegetalInequalityRepository {
 		cards_shared.CqlFilterPrefix,
 	)
 
-	return &externalVegetalInequalityRepository{
+	return &externalVegetationInequalityRepository{
 		geoserverURL: geoserverURL,
 	}
 }
 
-func (r *externalVegetalInequalityRepository) LoadYears(city string) ([]int, error) {
+func (r *externalVegetationInequalityRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	processProperties := func(props map[string]interface{}) (int, error) {
@@ -71,7 +71,7 @@ func tempLoadInequalityData(v1 int, sub1 *string) {
 	cards_shared.AuxLoadSubtitles(v1, 0, sub1) // a media nacional deve ser incluida posteriormente
 }
 
-func (r *externalVegetalInequalityRepository) LoadInequalityData(city string, year string) ([]InequalityDataItem, error) {
+func (r *externalVegetationInequalityRepository) LoadInequalityData(city string, year string) ([]InequalityDataItem, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	data, err := cards_shared.FetchFromURL(url)

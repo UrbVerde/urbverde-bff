@@ -1,4 +1,4 @@
-package repositories_cards_vegetal
+package repositories_cards_vegetation
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type VegetalInfoRepository interface {
+type VegetationInfoRepository interface {
 	LoadInfoData(city string) ([]InfoDataItem, error)
 }
 
@@ -26,12 +26,12 @@ type InfoDataItem struct {
 	Value string `json:"value"`
 }
 
-type externalVegetalInfoRepository struct {
+type externalVegetationInfoRepository struct {
 	temperatureURL string
 	squareURL      string
 }
 
-func NewExternalVegetalInfoRepository() VegetalInfoRepository {
+func NewExternalVegetationInfoRepository() VegetationInfoRepository {
 	_ = godotenv.Load()
 
 	geoserverURL := os.Getenv("GEOSERVER_URL")
@@ -57,13 +57,13 @@ func NewExternalVegetalInfoRepository() VegetalInfoRepository {
 		cards_shared.CqlFilterPrefix,
 	)
 
-	return &externalVegetalInfoRepository{
+	return &externalVegetationInfoRepository{
 		temperatureURL: temperatureURL,
 		squareURL:      squareURL,
 	}
 }
 
-func (r *externalVegetalInfoRepository) loadGeneralData(city string) (*cards_shared.FeatureCollection, error) {
+func (r *externalVegetationInfoRepository) loadGeneralData(city string) (*cards_shared.FeatureCollection, error) {
 	squareUrl := r.squareURL + city + "&outputFormat=application/json"
 	squareData, err := cards_shared.FetchFromURL(squareUrl)
 	if err != nil {
@@ -101,7 +101,7 @@ func sortGeneralData(data *cards_shared.FeatureCollection) *cards_shared.Feature
 	return data
 }
 
-func (r *externalVegetalInfoRepository) LoadInfoData(city string) ([]InfoDataItem, error) {
+func (r *externalVegetationInfoRepository) LoadInfoData(city string) ([]InfoDataItem, error) {
 	data, err := r.loadGeneralData(city)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao carregar dados: %w", err)

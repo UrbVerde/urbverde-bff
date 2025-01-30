@@ -283,189 +283,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/cards/vegetal/cover": {
-            "get": {
-                "description": "Retorna dados relacionados à cobertura vegetal para o município fornecido",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "cards/vegetal"
-                ],
-                "summary": "Retorna dados relacionados à cobertura vegetal",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Código de município",
-                        "name": "city",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Ano dos dados",
-                        "name": "year",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/cards.CardsDataItem"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/cards.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/cards/vegetal/inequality": {
-            "get": {
-                "description": "Retorna dados relacionados à desigualdade ambiental e a vegetação para o município fornecido",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "cards/vegetal"
-                ],
-                "summary": "Retorna dados relacionados à desigualdade ambiental e a vegetação",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Código de município",
-                        "name": "city",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Ano dos dados",
-                        "name": "year",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/cards.CardsDataItem"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/cards.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/cards/vegetal/info": {
-            "get": {
-                "description": "Retorna dados adicionais para a camada",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "cards/vegetal"
-                ],
-                "summary": "Retorna dados adicionais para a vegetação",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Código de município",
-                        "name": "city",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/cards.CardsDataItem"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/cards.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/cards/vegetal/ranking": {
-            "get": {
-                "description": "Retorna dados para a construção do ranking de desigualdade ambiental e a vegetação",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "cards/vegetal"
-                ],
-                "summary": "Retorna dados de ranking",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Código de município",
-                        "name": "city",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Ano dos dados",
-                        "name": "year",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/cards.RankingData"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/cards.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/cards/weather/heat": {
+        "/cards/temperature/heat": {
             "get": {
                 "description": "Retorna os dados de calor extremo para o município e ano fornecidos",
                 "consumes": [
@@ -475,7 +293,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "cards/weather"
+                    "cards/temperature"
                 ],
                 "summary": "Retorna dados de calor extremo",
                 "parameters": [
@@ -512,7 +330,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/cards/weather/info": {
+        "/cards/temperature/info": {
             "get": {
                 "description": "Retorna dados adicionais para o município fornecido",
                 "consumes": [
@@ -522,7 +340,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "cards/weather"
+                    "cards/temperature"
                 ],
                 "summary": "Retorna dados adicionais",
                 "parameters": [
@@ -553,7 +371,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/cards/weather/ranking": {
+        "/cards/temperature/ranking": {
             "get": {
                 "description": "Retorna os dados de ranking em clima para o município e ano fornecidos",
                 "consumes": [
@@ -563,7 +381,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "cards/weather"
+                    "cards/temperature"
                 ],
                 "summary": "Retorna dados de ranking de clima",
                 "parameters": [
@@ -600,7 +418,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/cards/weather/temperature": {
+        "/cards/temperature/weather": {
             "get": {
                 "description": "Retorna os dados de temperatura para o município e ano fornecidos",
                 "consumes": [
@@ -610,7 +428,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "cards/weather"
+                    "cards/temperature"
                 ],
                 "summary": "Retorna dados de temperatura",
                 "parameters": [
@@ -635,6 +453,188 @@ const docTemplate = `{
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/vegetation/cover": {
+            "get": {
+                "description": "Retorna dados relacionados à cobertura vegetal para o município fornecido",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/vegetation"
+                ],
+                "summary": "Retorna dados relacionados à cobertura vegetal",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ano dos dados",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/vegetation/inequality": {
+            "get": {
+                "description": "Retorna dados relacionados à desigualdade ambiental e a vegetação para o município fornecido",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/vegetation"
+                ],
+                "summary": "Retorna dados relacionados à desigualdade ambiental e a vegetação",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ano dos dados",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/vegetation/info": {
+            "get": {
+                "description": "Retorna dados adicionais para a camada",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/vegetation"
+                ],
+                "summary": "Retorna dados adicionais para a vegetação",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/vegetation/ranking": {
+            "get": {
+                "description": "Retorna dados para a construção do ranking de desigualdade ambiental e a vegetação",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/vegetation"
+                ],
+                "summary": "Retorna dados de ranking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ano dos dados",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.RankingData"
                             }
                         }
                     },

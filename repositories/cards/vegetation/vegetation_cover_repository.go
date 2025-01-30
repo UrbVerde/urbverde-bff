@@ -1,4 +1,4 @@
-package repositories_cards_vegetal
+package repositories_cards_vegetation
 
 import (
 	"fmt"
@@ -10,14 +10,14 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type VegetalCoverRepository interface {
+type VegetationCoverRepository interface {
 	cards_shared.RepositoryBase
 	LoadCoverData(city string, year string) ([]CoverDataItem, error)
 }
 
 type CoverProperties struct {
 	Ano  int     `json:"ano"`
-	B1   float64 `json:"b1"`   // % da cobertura vegetal
+	B1   float64 `json:"b1"`   // % da cobertura vegetation
 	B1h1 float64 `json:"b1h1"` // Área vegetada em campos de futebol
 	B1h3 float64 `json:"b1h3"` // Variação Min
 	B1h4 float64 `json:"b1h4"` // Variação Max
@@ -30,11 +30,11 @@ type CoverDataItem struct {
 	Value    string  `json:"value"`
 }
 
-type externalVegetalCoverRepository struct {
+type externalVegetationCoverRepository struct {
 	geoserverURL string
 }
 
-func NewExternalVegetalCoverRepository() VegetalCoverRepository {
+func NewExternalVegetationCoverRepository() VegetationCoverRepository {
 	_ = godotenv.Load()
 
 	geoserverURL := os.Getenv("GEOSERVER_URL")
@@ -51,12 +51,12 @@ func NewExternalVegetalCoverRepository() VegetalCoverRepository {
 		cards_shared.CqlFilterPrefix,
 	)
 
-	return &externalVegetalCoverRepository{
+	return &externalVegetationCoverRepository{
 		geoserverURL: geoserverURL,
 	}
 }
 
-func (r *externalVegetalCoverRepository) LoadYears(city string) ([]int, error) {
+func (r *externalVegetationCoverRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	processProperties := func(props map[string]interface{}) (int, error) {
@@ -74,7 +74,7 @@ func tempLoadCoverData(v1 int, sub1 *string) {
 	cards_shared.AuxLoadSubtitles(v1, 0, sub1) // a media nacional deve ser incluida posteriormente
 }
 
-func (r *externalVegetalCoverRepository) LoadCoverData(city string, year string) ([]CoverDataItem, error) {
+func (r *externalVegetationCoverRepository) LoadCoverData(city string, year string) ([]CoverDataItem, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	data, err := cards_shared.FetchFromURL(url)

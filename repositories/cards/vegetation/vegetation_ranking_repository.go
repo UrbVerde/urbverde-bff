@@ -1,4 +1,4 @@
-package repositories_cards_vegetal
+package repositories_cards_vegetation
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type VegetalRankingRepository interface {
+type VegetationRankingRepository interface {
 	cards_shared.RepositoryBase
 	LoadRankingData(city string, year string) ([]RankingData, error)
 }
@@ -45,11 +45,11 @@ type RankingData struct {
 	Items    []RankingDataItem `json:"items"`
 }
 
-type externalVegetalRankingRepository struct {
+type externalVegetationRankingRepository struct {
 	geoserverURL string
 }
 
-func NewExternalVegetalRankingRepository() VegetalRankingRepository {
+func NewExternalVegetationRankingRepository() VegetationRankingRepository {
 	_ = godotenv.Load()
 
 	geoserverURL := os.Getenv("GEOSERVER_URL")
@@ -66,12 +66,12 @@ func NewExternalVegetalRankingRepository() VegetalRankingRepository {
 		cards_shared.CqlFilterPrefix,
 	)
 
-	return &externalVegetalRankingRepository{
+	return &externalVegetationRankingRepository{
 		geoserverURL: geoserverURL,
 	}
 }
 
-func (r *externalVegetalRankingRepository) LoadYears(city string) ([]int, error) {
+func (r *externalVegetationRankingRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	processProperties := func(props map[string]interface{}) (int, error) {
@@ -85,7 +85,7 @@ func (r *externalVegetalRankingRepository) LoadYears(city string) ([]int, error)
 	return cards_shared.LoadYears(url, processProperties)
 }
 
-func (r *externalVegetalRankingRepository) LoadRankingData(city string, year string) ([]RankingData, error) {
+func (r *externalVegetationRankingRepository) LoadRankingData(city string, year string) ([]RankingData, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	data, err := cards_shared.FetchFromURL(url)

@@ -6,9 +6,9 @@ import (
 	repositories_cards_temperature "urbverde-api/repositories/cards/temperature"
 	services_cards_temperature "urbverde-api/services/cards/temperature"
 
-	controllers_cards_vegetal "urbverde-api/controllers/cards/vegetal"
-	repositories_cards_vegetal "urbverde-api/repositories/cards/vegetal"
-	services_cards_vegetal "urbverde-api/services/cards/vegetal"
+	controllers_cards_vegetation "urbverde-api/controllers/cards/vegetation"
+	repositories_cards_vegetation "urbverde-api/repositories/cards/vegetation"
+	services_cards_vegetation "urbverde-api/services/cards/vegetation"
 
 	controllers_cards_square "urbverde-api/controllers/cards/square"
 	repositories_cards_square "urbverde-api/repositories/cards/square"
@@ -42,7 +42,7 @@ type ErrorResponse struct {
 
 func SetupCardsRoutes(rg *gin.RouterGroup) {
 	SetupTemperatureRoutes(rg)
-	SetupVegetalRoutes(rg)
+	SetupVegetationRoutes(rg)
 	SetupSquareRoutes(rg)
 }
 
@@ -53,11 +53,11 @@ func SetupTemperatureRoutes(rg *gin.RouterGroup) {
 	setupTemperatureInfoRoutes(rg)
 }
 
-func SetupVegetalRoutes(rg *gin.RouterGroup) {
+func SetupVegetationRoutes(rg *gin.RouterGroup) {
 	setupCoverRoutes(rg)
-	setupVegetalInequalityRoutes(rg)
-	setupVegetalRankingRoutes(rg)
-	setupVegetalInfoRoutes(rg)
+	setupVegetationInequalityRoutes(rg)
+	setupVegetationRankingRoutes(rg)
+	setupVegetationInfoRoutes(rg)
 }
 
 func SetupSquareRoutes(rg *gin.RouterGroup) {
@@ -140,73 +140,73 @@ func setupTemperatureInfoRoutes(rg *gin.RouterGroup) {
 
 // @Summary Retorna dados relacionados à cobertura vegetal
 // @Description Retorna dados relacionados à cobertura vegetal para o município fornecido
-// @Tags cards/vegetal
+// @Tags cards/vegetation
 // @Accept json
 // @Produce json
 // @Param city query string true "Código de município"
 // @Param year query string false "Ano dos dados"
 // @Success 200 {object} []CardsDataItem
 // @Failure 400 {object} ErrorResponse
-// @Router /cards/vegetal/cover [get]
+// @Router /cards/vegetation/cover [get]
 func setupCoverRoutes(rg *gin.RouterGroup) {
-	coverRepo := repositories_cards_vegetal.NewExternalVegetalCoverRepository()
-	coverService := services_cards_vegetal.NewVegetalCoverService(coverRepo)
-	coverController := controllers_cards_vegetal.NewVegetalCoverController(coverService)
+	coverRepo := repositories_cards_vegetation.NewExternalVegetationCoverRepository()
+	coverService := services_cards_vegetation.NewVegetationCoverService(coverRepo)
+	coverController := controllers_cards_vegetation.NewVegetationCoverController(coverService)
 
-	rg.GET("/cards/vegetal/cover", coverController.LoadCoverData)
+	rg.GET("/cards/vegetation/cover", coverController.LoadCoverData)
 }
 
 // @Summary Retorna dados relacionados à desigualdade ambiental e a vegetação
 // @Description Retorna dados relacionados à desigualdade ambiental e a vegetação para o município fornecido
-// @Tags cards/vegetal
+// @Tags cards/vegetation
 // @Accept json
 // @Produce json
 // @Param city query string true "Código de município"
 // @Param year query string false "Ano dos dados"
 // @Success 200 {object} []CardsDataItem
 // @Failure 400 {object} ErrorResponse
-// @Router /cards/vegetal/inequality [get]
-func setupVegetalInequalityRoutes(rg *gin.RouterGroup) {
-	inequalityRepo := repositories_cards_vegetal.NewExternalVegetalInequalityRepository()
-	inequalityService := services_cards_vegetal.NewVegetalInequalityService(inequalityRepo)
-	inequalityController := controllers_cards_vegetal.NewVegetalInequalityController(inequalityService)
+// @Router /cards/vegetation/inequality [get]
+func setupVegetationInequalityRoutes(rg *gin.RouterGroup) {
+	inequalityRepo := repositories_cards_vegetation.NewExternalVegetationInequalityRepository()
+	inequalityService := services_cards_vegetation.NewVegetationInequalityService(inequalityRepo)
+	inequalityController := controllers_cards_vegetation.NewVegetationInequalityController(inequalityService)
 
-	rg.GET("/cards/vegetal/inequality", inequalityController.LoadInequalityData)
+	rg.GET("/cards/vegetation/inequality", inequalityController.LoadInequalityData)
 }
 
 // @Summary Retorna dados de ranking
 // @Description Retorna dados para a construção do ranking de desigualdade ambiental e a vegetação
-// @Tags cards/vegetal
+// @Tags cards/vegetation
 // @Accept json
 // @Produce json
 // @Param city query string true "Código de município"
 // @Param year query string false "Ano dos dados"
 // @Success 200 {object} []RankingData
 // @Failure 400 {object} ErrorResponse
-// @Router /cards/vegetal/ranking [get]
-func setupVegetalRankingRoutes(rg *gin.RouterGroup) {
-	rankRepo := repositories_cards_vegetal.NewExternalVegetalRankingRepository()
-	rankService := services_cards_vegetal.NewVegetalRankingService(rankRepo)
-	rankController := controllers_cards_vegetal.NewVegetalRankingController(rankService)
+// @Router /cards/vegetation/ranking [get]
+func setupVegetationRankingRoutes(rg *gin.RouterGroup) {
+	rankRepo := repositories_cards_vegetation.NewExternalVegetationRankingRepository()
+	rankService := services_cards_vegetation.NewVegetationRankingService(rankRepo)
+	rankController := controllers_cards_vegetation.NewVegetationRankingController(rankService)
 
-	rg.GET("/cards/vegetal/ranking", rankController.LoadRankingData)
+	rg.GET("/cards/vegetation/ranking", rankController.LoadRankingData)
 }
 
 // @Summary Retorna dados adicionais para a vegetação
 // @Description Retorna dados adicionais para a camada
-// @Tags cards/vegetal
+// @Tags cards/vegetation
 // @Accept json
 // @Produce json
 // @Param city query string true "Código de município"
 // @Success 200 {object} []CardsDataItem
 // @Failure 400 {object} ErrorResponse
-// @Router /cards/vegetal/info [get]
-func setupVegetalInfoRoutes(rg *gin.RouterGroup) {
-	infoRepo := repositories_cards_vegetal.NewExternalVegetalInfoRepository()
-	infoService := services_cards_vegetal.NewVegetalInfoService(infoRepo)
-	infoController := controllers_cards_vegetal.NewVegetalInfoController(infoService)
+// @Router /cards/vegetation/info [get]
+func setupVegetationInfoRoutes(rg *gin.RouterGroup) {
+	infoRepo := repositories_cards_vegetation.NewExternalVegetationInfoRepository()
+	infoService := services_cards_vegetation.NewVegetationInfoService(infoRepo)
+	infoController := controllers_cards_vegetation.NewVegetationInfoController(infoService)
 
-	rg.GET("/cards/vegetal/info", infoController.LoadInfoData)
+	rg.GET("/cards/vegetation/info", infoController.LoadInfoData)
 }
 
 // @Summary Retorna dados dos parques e praças
@@ -271,9 +271,9 @@ func setupSquareRankingRoutes(rg *gin.RouterGroup) {
 // @Failure 400 {object} ErrorResponse
 // @Router /cards/square/info [get]
 func setupSquareInfoRoutes(rg *gin.RouterGroup) {
-	squareRepo := repositories_cards_vegetal.NewExternalVegetalInfoRepository()
-	squareService := services_cards_vegetal.NewVegetalInfoService(squareRepo)
-	squareController := controllers_cards_vegetal.NewVegetalInfoController(squareService)
+	squareRepo := repositories_cards_vegetation.NewExternalVegetationInfoRepository()
+	squareService := services_cards_vegetation.NewVegetationInfoService(squareRepo)
+	squareController := controllers_cards_vegetation.NewVegetationInfoController(squareService)
 
 	rg.GET("/cards/square/info", squareController.LoadInfoData)
 }
