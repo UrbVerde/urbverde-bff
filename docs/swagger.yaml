@@ -240,6 +240,10 @@ paths:
         name: city
         required: true
         type: string
+      - description: Ano dos dados
+        in: query
+        name: year
+        type: string
       produces:
       - application/json
       responses:
@@ -324,6 +328,10 @@ paths:
         in: query
         name: city
         required: true
+        type: string
+      - description: Ano dos dados
+        in: query
+        name: year
         type: string
       produces:
       - application/json

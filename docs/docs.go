@@ -133,6 +133,12 @@ const docTemplate = `{
                         "name": "city",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ano dos dados",
+                        "name": "year",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -262,6 +268,12 @@ const docTemplate = `{
                         "name": "city",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ano dos dados",
+                        "name": "year",
+                        "in": "query"
                     }
                 ],
                 "responses": {

@@ -215,6 +215,7 @@ func setupVegetationInfoRoutes(rg *gin.RouterGroup) {
 // @Accept json
 // @Produce json
 // @Param city query string true "Código de município"
+// @Param year query string false "Ano dos dados"
 // @Success 200 {object} []CardsDataItem
 // @Failure 400 {object} ErrorResponse
 // @Router /cards/parks/square [get]
@@ -232,6 +233,7 @@ func setupParksSquareRoutes(rg *gin.RouterGroup) {
 // @Accept json
 // @Produce json
 // @Param city query string true "Código de município"
+// @Param year query string false "Ano dos dados"
 // @Success 200 {object} []CardsDataItem
 // @Failure 400 {object} ErrorResponse
 // @Router /cards/parks/inequality [get]

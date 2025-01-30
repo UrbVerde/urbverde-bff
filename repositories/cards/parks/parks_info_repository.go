@@ -131,11 +131,11 @@ func (r *externalParksInfoRepository) LoadInfoData(city string) ([]InfoDataItem,
 	if !foundC2 && !foundB1h1 && !foundB3 {
 		return nil, fmt.Errorf("nenhum dado válido encontrado")
 	}
-
+	fmt.Println(latestB3)
 	result := []InfoDataItem{
 		{"Temperatura média da superfície", strconv.Itoa(int(latestC2)) + "°C"},
 		{"Média da cobertura vegetal", strconv.FormatFloat(latestB1h1, 'f', 2, 64) + "%"},
-		{"Desigualdade ambiental e social", strconv.Itoa(int(latestB3))},
+		{"Desigualdade ambiental e social (IDSA)", strconv.Itoa(int(latestB3 * 100))},
 	}
 
 	return result, nil
