@@ -229,7 +229,7 @@ paths:
       summary: Retorna sugestões de endereço
       tags:
       - address
-  /cards/square/inequality:
+  /cards/parks/inequality:
     get:
       consumes:
       - application/json
@@ -255,8 +255,8 @@ paths:
             $ref: '#/definitions/cards.ErrorResponse'
       summary: Retorna dados sobre desigualdade
       tags:
-      - cards/square
-  /cards/square/info:
+      - cards/parks
+  /cards/parks/info:
     get:
       consumes:
       - application/json
@@ -282,35 +282,8 @@ paths:
             $ref: '#/definitions/cards.ErrorResponse'
       summary: Retorna dados adicionais para a camada de praças e parques
       tags:
-      - cards/square
-  /cards/square/parks:
-    get:
-      consumes:
-      - application/json
-      description: Retorna dados de parques e praças para a camada
-      parameters:
-      - description: Código de município
-        in: query
-        name: city
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/cards.CardsDataItem'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/cards.ErrorResponse'
-      summary: Retorna dados dos parques e praças
-      tags:
-      - cards/square
-  /cards/square/ranking:
+      - cards/parks
+  /cards/parks/ranking:
     get:
       consumes:
       - application/json
@@ -340,7 +313,34 @@ paths:
             $ref: '#/definitions/cards.ErrorResponse'
       summary: Retorna dados de ranking
       tags:
-      - cards/square
+      - cards/parks
+  /cards/parks/square:
+    get:
+      consumes:
+      - application/json
+      description: Retorna dados de parques e praças para a camada
+      parameters:
+      - description: Código de município
+        in: query
+        name: city
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/cards.CardsDataItem'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/cards.ErrorResponse'
+      summary: Retorna dados dos parques e praças
+      tags:
+      - cards/parks
   /cards/temperature/heat:
     get:
       consumes:

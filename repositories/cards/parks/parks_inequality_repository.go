@@ -1,4 +1,4 @@
-package repositories_cards_square
+package repositories_cards_parks
 
 import (
 	"fmt"
@@ -9,12 +9,12 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type SquareInequalityRepository interface {
+type ParksInequalityRepository interface {
 	cards_shared.RepositoryBase
-	LoadInequalityData(city string, year string) ([]SquareInequalityDataItem, error)
+	LoadInequalityData(city string, year string) ([]ParksInequalityDataItem, error)
 }
 
-type SquareInequalityProperties struct {
+type ParksInequalityProperties struct {
 	Ano  int     `json:"ano"`
 	H12a float64 `json:"h12a"` // Negros e indígenas
 	H11a float64 `json:"h11a"` // Mulheres
@@ -22,17 +22,17 @@ type SquareInequalityProperties struct {
 	H9a  float64 `json:"h9a"`  // Idosos
 }
 
-type SquareInequalityDataItem struct {
+type ParksInequalityDataItem struct {
 	Title    string  `json:"title"`
 	Subtitle *string `json:"subtitle,omitempty"`
 	Value    string  `json:"value"`
 }
 
-type externalSquareInequalityRepository struct {
+type externalParksInequalityRepository struct {
 	geoserverURL string
 }
 
-func NewExternalSquareInequalityRepository() SquareInequalityRepository {
+func NewExternalParksInequalityRepository() ParksInequalityRepository {
 	_ = godotenv.Load()
 
 	geoserverURL := os.Getenv("GEOSERVER_URL")
@@ -49,12 +49,12 @@ func NewExternalSquareInequalityRepository() SquareInequalityRepository {
 		cards_shared.CqlFilterPrefix,
 	)
 
-	return &externalSquareInequalityRepository{
+	return &externalParksInequalityRepository{
 		geoserverURL: geoserverURL,
 	}
 }
 
-func (r *externalSquareInequalityRepository) LoadYears(city string) ([]int, error) {
+func (r *externalParksInequalityRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	processProperties := func(props map[string]interface{}) (int, error) {
@@ -68,7 +68,7 @@ func (r *externalSquareInequalityRepository) LoadYears(city string) ([]int, erro
 	return cards_shared.LoadYears(url, processProperties)
 }
 
-func (r *externalSquareInequalityRepository) LoadInequalityData(city string, year string) ([]SquareInequalityDataItem, error) {
+func (r *externalParksInequalityRepository) LoadInequalityData(city string, year string) ([]ParksInequalityDataItem, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	data, err := cards_shared.FetchFromURL(url)
@@ -89,7 +89,7 @@ func (r *externalSquareInequalityRepository) LoadInequalityData(city string, yea
 			return nil, fmt.Errorf("tipo inesperado de propriedades")
 		}
 
-		var inequalityProps SquareInequalityProperties
+		var inequalityProps ParksInequalityProperties
 		if err := cards_shared.MapToStruct(props, &inequalityProps); err != nil {
 			return nil, err
 		}
@@ -106,7 +106,7 @@ func (r *externalSquareInequalityRepository) LoadInequalityData(city string, yea
 		return nil, fmt.Errorf("ano %d não encontrado nos dados", convYear)
 	}
 
-	inequalityProps := filtered.Properties.(SquareInequalityProperties)
+	inequalityProps := filtered.Properties.(ParksInequalityProperties)
 
 	black_indigenous_value := strconv.FormatFloat(inequalityProps.H12a, 'f', 2, 64)
 	women_value := strconv.FormatFloat(inequalityProps.H11a, 'f', 2, 64)
@@ -115,7 +115,7 @@ func (r *externalSquareInequalityRepository) LoadInequalityData(city string, yea
 
 	var general_subtitle string = "Porcentagem vivendo fora da vizinhança das praças"
 
-	result := []SquareInequalityDataItem{
+	result := []ParksInequalityDataItem{
 		{"Negros e indígenas", &general_subtitle, black_indigenous_value + "%"},
 		{"Mulheres", &general_subtitle, women_value + "%"},
 		{"Crianças", &general_subtitle, children_value + "%"},

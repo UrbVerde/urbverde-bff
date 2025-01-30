@@ -1,4 +1,4 @@
-package repositories_cards_square
+package repositories_cards_parks
 
 import (
 	"fmt"
@@ -10,12 +10,12 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type SquareParksRepository interface {
+type ParksSquareRepository interface {
 	cards_shared.RepositoryBase
-	LoadParksData(city string, year string) ([]ParksDataItem, error)
+	LoadSquareData(city string, year string) ([]SquareDataItem, error)
 }
 
-type ParksProperties struct {
+type SquareProperties struct {
 	Ano int     `json:"ano"`
 	A1  float64 `json:"a1"` // % moradores proximos a praças
 	A4  float64 `json:"a4"` // Distancia média até as praças
@@ -23,18 +23,17 @@ type ParksProperties struct {
 	H7  float64 `json:"h7"` // Racismo ambiental
 }
 
-// Response JSON structure
-type ParksDataItem struct {
+type SquareDataItem struct {
 	Title    string  `json:"title"`
 	Subtitle *string `json:"subtitle,omitempty"`
 	Value    string  `json:"value"`
 }
 
-type externalSquareParksRepository struct {
+type externalParksSquareRepository struct {
 	geoserverURL string
 }
 
-func NewExternalSquareParksRepository() SquareParksRepository {
+func NewExternalParksSquareRepository() ParksSquareRepository {
 	_ = godotenv.Load()
 
 	geoserverURL := os.Getenv("GEOSERVER_URL")
@@ -51,12 +50,12 @@ func NewExternalSquareParksRepository() SquareParksRepository {
 		cards_shared.CqlFilterPrefix,
 	)
 
-	return &externalSquareParksRepository{
+	return &externalParksSquareRepository{
 		geoserverURL: geoserverURL,
 	}
 }
 
-func (r *externalSquareParksRepository) LoadYears(city string) ([]int, error) {
+func (r *externalParksSquareRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	processProperties := func(props map[string]interface{}) (int, error) {
@@ -70,7 +69,7 @@ func (r *externalSquareParksRepository) LoadYears(city string) ([]int, error) {
 	return cards_shared.LoadYears(url, processProperties)
 }
 
-func (r *externalSquareParksRepository) LoadParksData(city string, year string) ([]ParksDataItem, error) {
+func (r *externalParksSquareRepository) LoadSquareData(city string, year string) ([]SquareDataItem, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	data, err := cards_shared.FetchFromURL(url)
@@ -91,14 +90,14 @@ func (r *externalSquareParksRepository) LoadParksData(city string, year string) 
 			return nil, fmt.Errorf("tipo inesperado de propriedades")
 		}
 
-		var parksProps ParksProperties
-		if err := cards_shared.MapToStruct(props, &parksProps); err != nil {
+		var squareProps SquareProperties
+		if err := cards_shared.MapToStruct(props, &squareProps); err != nil {
 			return nil, err
 		}
 
-		if parksProps.Ano == convYear {
+		if squareProps.Ano == convYear {
 			filtered = feature
-			filtered.Properties = parksProps
+			filtered.Properties = squareProps
 			found = true
 			break
 		}
@@ -108,18 +107,18 @@ func (r *externalSquareParksRepository) LoadParksData(city string, year string) 
 		return nil, fmt.Errorf("ano %d não encontrado nos dados", convYear)
 	}
 
-	parksProps := filtered.Properties.(ParksProperties)
+	squareProps := filtered.Properties.(SquareProperties)
 
-	square_value := int(parksProps.A1)
-	distance_value := int(math.Round(parksProps.A4))
-	inequality_value := parksProps.H6
-	racism_value := int(math.Round(parksProps.H7))
+	square_value := int(squareProps.A1)
+	distance_value := int(math.Round(squareProps.A4))
+	inequality_value := squareProps.H6
+	racism_value := int(math.Round(squareProps.H7))
 
 	// var square_subtitle string = " da média nacional de " // a média nacional deve ser incluída poosteriormente
 	var inequality_subtitle string = "Moradores próximos a praças têm em média 15% mais de renda"
 	var racism_subtitle string = "População negra ou indígena que vive fora da vizinhança das praças"
 
-	result := []ParksDataItem{
+	result := []SquareDataItem{
 		{"Moradores próximos a praças", nil, strconv.Itoa(square_value) + "%"},
 		{"Distância média até as praças", nil, strconv.Itoa(distance_value) + " metros"},
 		{"Desigualdade de renda", &inequality_subtitle, strconv.FormatFloat(inequality_value, 'f', 2, 64) + "x"},

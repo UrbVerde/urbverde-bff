@@ -1,4 +1,4 @@
-package repositories_cards_square
+package repositories_cards_parks
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type SquareRankingRepository interface {
+type ParksRankingRepository interface {
 	cards_shared.RepositoryBase
 	LoadRankingData(city string, year string) ([]RankingData, error)
 }
@@ -48,11 +48,11 @@ type RankingData struct {
 	Items    []RankingDataItem `json:"items"`
 }
 
-type externalSquareRankingRepository struct {
+type externalParksRankingRepository struct {
 	geoserverURL string
 }
 
-func NewExternalSquareRankingRepository() SquareRankingRepository {
+func NewExternalParksRankingRepository() ParksRankingRepository {
 	_ = godotenv.Load()
 
 	geoserverURL := os.Getenv("GEOSERVER_URL")
@@ -69,12 +69,12 @@ func NewExternalSquareRankingRepository() SquareRankingRepository {
 		cards_shared.CqlFilterPrefix,
 	)
 
-	return &externalSquareRankingRepository{
+	return &externalParksRankingRepository{
 		geoserverURL: geoserverURL,
 	}
 }
 
-func (r *externalSquareRankingRepository) LoadYears(city string) ([]int, error) {
+func (r *externalParksRankingRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	processProperties := func(props map[string]interface{}) (int, error) {
@@ -88,7 +88,7 @@ func (r *externalSquareRankingRepository) LoadYears(city string) ([]int, error) 
 	return cards_shared.LoadYears(url, processProperties)
 }
 
-func (r *externalSquareRankingRepository) LoadRankingData(city string, year string) ([]RankingData, error) {
+func (r *externalParksRankingRepository) LoadRankingData(city string, year string) ([]RankingData, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	data, err := cards_shared.FetchFromURL(url)

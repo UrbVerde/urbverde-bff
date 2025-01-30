@@ -113,7 +113,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/cards/square/inequality": {
+        "/cards/parks/inequality": {
             "get": {
                 "description": "Retorna dados de desigualdade para a camada",
                 "consumes": [
@@ -123,7 +123,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "cards/square"
+                    "cards/parks"
                 ],
                 "summary": "Retorna dados sobre desigualdade",
                 "parameters": [
@@ -154,7 +154,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/cards/square/info": {
+        "/cards/parks/info": {
             "get": {
                 "description": "Retorna dados adicionais para a camada",
                 "consumes": [
@@ -164,7 +164,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "cards/square"
+                    "cards/parks"
                 ],
                 "summary": "Retorna dados adicionais para a camada de praças e parques",
                 "parameters": [
@@ -195,48 +195,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/cards/square/parks": {
-            "get": {
-                "description": "Retorna dados de parques e praças para a camada",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "cards/square"
-                ],
-                "summary": "Retorna dados dos parques e praças",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Código de município",
-                        "name": "city",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/cards.CardsDataItem"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/cards.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/cards/square/ranking": {
+        "/cards/parks/ranking": {
             "get": {
                 "description": "Retorna dados para a construção do ranking de praças e parques",
                 "consumes": [
@@ -246,7 +205,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "cards/square"
+                    "cards/parks"
                 ],
                 "summary": "Retorna dados de ranking",
                 "parameters": [
@@ -271,6 +230,47 @@ const docTemplate = `{
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/cards.RankingData"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/parks/square": {
+            "get": {
+                "description": "Retorna dados de parques e praças para a camada",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/parks"
+                ],
+                "summary": "Retorna dados dos parques e praças",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
                             }
                         }
                     },
