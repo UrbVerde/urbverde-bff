@@ -1,5 +1,5 @@
-// urbverde-bff/repositories/cards/weather/weather_temperature_repository_test.go
-package repositories_cards_weather
+// urbverde-bff/repositories/cards/temperature/temperature_weather_repository_test.go
+package repositories_cards_temperature
 
 import (
 	"net/http"
@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLoadTemperatureData(t *testing.T) {
+func TestLoadWeatherData(t *testing.T) {
 	_ = godotenv.Load()
 
 	t.Run("Valid response", func(t *testing.T) {
@@ -37,13 +37,13 @@ func TestLoadTemperatureData(t *testing.T) {
 
 		os.Setenv("GEOSERVER_URL", server.URL+"/")
 
-		repo := NewExternalWeatherTemperatureRepository()
+		repo := NewExternalTemperatureWeatherRepository()
 
-		results, err := repo.LoadTemperatureData("3548906", "2020")
+		results, err := repo.LoadWeatherData("3548906", "2020")
 
 		assert.NoError(t, err)
 
-		expected := []TemperatureDataItem{
+		expected := []WeatherDataItem{
 			{"Nível de ilha de calor", nil, "2"},
 			{"Temperatura média da superfície", nil, "32°C"},
 			{"Maior amplitude", utils.StringPtr("É a diferença entre a temperatura mais quente e a mais fria"), "9°C"},

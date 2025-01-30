@@ -1,5 +1,5 @@
-// urbverde-bff/repositories/cards/weather/weather_temperature_repository.go
-package repositories_cards_weather
+// urbverde-bff/repositories/cards/temperature/temperature_temperature_repository.go
+package repositories_cards_temperature
 
 import (
 	"fmt"
@@ -11,12 +11,12 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type WeatherTemperatureRepository interface {
+type TemperatureWeatherRepository interface {
 	cards_shared.RepositoryBase
-	LoadTemperatureData(city string, year string) ([]TemperatureDataItem, error)
+	LoadWeatherData(city string, year string) ([]WeatherDataItem, error)
 }
 
-type TemperatureProperties struct {
+type WeatherProperties struct {
 	Ano int     `json:"ano"`
 	C1  float64 `json:"c1"`  // Nível de Ilha de Calor
 	H5b int     `json:"h5b"` // Amplitude
@@ -24,18 +24,17 @@ type TemperatureProperties struct {
 	C3  float64 `json:"c3"`  // Temperatura Máxima
 }
 
-// Response JSON structure
-type TemperatureDataItem struct {
+type WeatherDataItem struct {
 	Title    string  `json:"title"`
 	Subtitle *string `json:"subtitle,omitempty"`
 	Value    string  `json:"value"`
 }
 
-type externalWeatherTemperatureRepository struct {
+type externalTemperatureWeatherRepository struct {
 	geoserverURL string
 }
 
-func NewExternalWeatherTemperatureRepository() WeatherTemperatureRepository {
+func NewExternalTemperatureWeatherRepository() TemperatureWeatherRepository {
 	_ = godotenv.Load()
 
 	geoserverURL := os.Getenv("GEOSERVER_URL")
@@ -52,12 +51,12 @@ func NewExternalWeatherTemperatureRepository() WeatherTemperatureRepository {
 		cards_shared.CqlFilterPrefix,
 	)
 
-	return &externalWeatherTemperatureRepository{
+	return &externalTemperatureWeatherRepository{
 		geoserverURL: geoserverURL,
 	}
 }
 
-func (r *externalWeatherTemperatureRepository) LoadYears(city string) ([]int, error) {
+func (r *externalTemperatureWeatherRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	processProperties := func(props map[string]interface{}) (int, error) {
@@ -76,7 +75,7 @@ func tempLoadData(v1 int, v2 int, sub1 *string, sub2 *string) {
 	cards_shared.AuxLoadSubtitles(v2, 0, sub2)
 }
 
-func (r *externalWeatherTemperatureRepository) LoadTemperatureData(city string, year string) ([]TemperatureDataItem, error) {
+func (r *externalTemperatureWeatherRepository) LoadWeatherData(city string, year string) ([]WeatherDataItem, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	data, err := cards_shared.FetchFromURL(url)
@@ -97,14 +96,14 @@ func (r *externalWeatherTemperatureRepository) LoadTemperatureData(city string, 
 			return nil, fmt.Errorf("tipo inesperado de propriedades")
 		}
 
-		var temperatureProps TemperatureProperties
-		if err := cards_shared.MapToStruct(props, &temperatureProps); err != nil {
+		var weatherProps WeatherProperties
+		if err := cards_shared.MapToStruct(props, &weatherProps); err != nil {
 			return nil, err
 		}
 
-		if temperatureProps.Ano == convYear {
+		if weatherProps.Ano == convYear {
 			filtered = feature
-			filtered.Properties = temperatureProps
+			filtered.Properties = weatherProps
 			found = true
 			break
 		}
@@ -114,12 +113,12 @@ func (r *externalWeatherTemperatureRepository) LoadTemperatureData(city string, 
 		return nil, fmt.Errorf("ano %d não encontrado nos dados", convYear)
 	}
 
-	temperatureProps := filtered.Properties.(TemperatureProperties)
+	weatherProps := filtered.Properties.(WeatherProperties)
 
-	heat_island_value := int(math.Round(temperatureProps.C1))
-	avg_temp_value := int(math.Round(temperatureProps.C2))
-	amplitude_value := temperatureProps.H5b
-	max_temp_value := int(math.Round(temperatureProps.C3))
+	heat_island_value := int(math.Round(weatherProps.C1))
+	avg_temp_value := int(math.Round(weatherProps.C2))
+	amplitude_value := weatherProps.H5b
+	max_temp_value := int(math.Round(weatherProps.C3))
 
 	// var heat_island_subtitle string = " da média nacional de " // deve ser adicionado junto do dado nacional
 	// var avg_temp_subtitle string = " da média nacional de "
@@ -127,7 +126,7 @@ func (r *externalWeatherTemperatureRepository) LoadTemperatureData(city string, 
 
 	// tempLoadData(heat_island_value, avg_temp_value, &heat_island_subtitle, &avg_temp_subtitle)
 
-	result := []TemperatureDataItem{
+	result := []WeatherDataItem{
 		{"Nível de ilha de calor", nil, strconv.Itoa(heat_island_value)},
 		{"Temperatura média da superfície", nil, strconv.Itoa(avg_temp_value) + "°C"},
 		{"Maior amplitude", &amplitude_subtitle, strconv.Itoa(amplitude_value) + "°C"},

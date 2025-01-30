@@ -1,5 +1,5 @@
-// urbverde-bff/repositories/cards/weather/weather_info_repository.go
-package repositories_cards_weather
+// urbverde-bff/repositories/cards/temperature/temperature_info_repository.go
+package repositories_cards_temperature
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type WeatherInfoRepository interface {
+type TemperatureInfoRepository interface {
 	LoadInfoData(city string) ([]InfoDataItem, error)
 }
 
@@ -27,12 +27,12 @@ type InfoDataItem struct {
 	Value string `json:"value"`
 }
 
-type externalWeatherInfoRepository struct {
+type externalTemperatureInfoRepository struct {
 	vegetalURL string
 	squareURL  string
 }
 
-func NewExternalWeatherInfoRepository() WeatherInfoRepository {
+func NewExternalTemperatureInfoRepository() TemperatureInfoRepository {
 	_ = godotenv.Load()
 
 	geoserverURL := os.Getenv("GEOSERVER_URL")
@@ -58,13 +58,13 @@ func NewExternalWeatherInfoRepository() WeatherInfoRepository {
 		cards_shared.CqlFilterPrefix,
 	)
 
-	return &externalWeatherInfoRepository{
+	return &externalTemperatureInfoRepository{
 		vegetalURL: vegetalURL,
 		squareURL:  squareURL,
 	}
 }
 
-func (r *externalWeatherInfoRepository) loadGeneralData(city string) (*cards_shared.FeatureCollection, error) {
+func (r *externalTemperatureInfoRepository) loadGeneralData(city string) (*cards_shared.FeatureCollection, error) {
 	squareUrl := r.squareURL + city + "&outputFormat=application/json"
 	squareData, err := cards_shared.FetchFromURL(squareUrl)
 	if err != nil {
@@ -102,7 +102,7 @@ func sortGeneralData(data *cards_shared.FeatureCollection) *cards_shared.Feature
 	return data
 }
 
-func (r *externalWeatherInfoRepository) LoadInfoData(city string) ([]InfoDataItem, error) {
+func (r *externalTemperatureInfoRepository) LoadInfoData(city string) ([]InfoDataItem, error) {
 	data, err := r.loadGeneralData(city)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao carregar dados: %w", err)

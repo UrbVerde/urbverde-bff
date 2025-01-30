@@ -1,5 +1,5 @@
-// urbverde-bff/repositories/cards/weather/weather_heat_repository.go
-package repositories_cards_weather
+// urbverde-bff/repositories/cards/temperature/temperature_heat_repository.go
+package repositories_cards_temperature
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type WeatherHeatRepository interface {
+type TemperatureHeatRepository interface {
 	cards_shared.RepositoryBase
 	LoadHeatData(city string, year string) ([]HeatDataItem, error)
 }
@@ -31,11 +31,11 @@ type HeatDataItem struct {
 	Value    string  `json:"value"`
 }
 
-type externalWeatherHeatRepository struct {
+type externalTemperatureHeatRepository struct {
 	geoserverURL string
 }
 
-func NewExternalWeatherHeatRepository() WeatherHeatRepository {
+func NewExternalTemperatureHeatRepository() TemperatureHeatRepository {
 	_ = godotenv.Load()
 
 	geoserverURL := os.Getenv("GEOSERVER_URL")
@@ -52,12 +52,12 @@ func NewExternalWeatherHeatRepository() WeatherHeatRepository {
 		cards_shared.CqlFilterPrefix,
 	)
 
-	return &externalWeatherHeatRepository{
+	return &externalTemperatureHeatRepository{
 		geoserverURL: geoserverURL,
 	}
 }
 
-func (r *externalWeatherHeatRepository) LoadYears(city string) ([]int, error) {
+func (r *externalTemperatureHeatRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	processProperties := func(props map[string]interface{}) (int, error) {
@@ -73,7 +73,7 @@ func (r *externalWeatherHeatRepository) LoadYears(city string) ([]int, error) {
 
 var subtitle string = "Porcentagem vivendo nas regiões mais quentes"
 
-func (r *externalWeatherHeatRepository) LoadHeatData(city string, year string) ([]HeatDataItem, error) {
+func (r *externalTemperatureHeatRepository) LoadHeatData(city string, year string) ([]HeatDataItem, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	data, err := cards_shared.FetchFromURL(url)

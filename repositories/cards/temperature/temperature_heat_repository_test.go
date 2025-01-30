@@ -1,5 +1,5 @@
-// urbverde-bff/repositories/cards/weather/weather_heat_repository_test.go
-package repositories_cards_weather
+// urbverde-bff/repositories/cards/temperature/temperature_heat_repository_test.go
+package repositories_cards_temperature
 
 import (
 	"net/http"
@@ -36,7 +36,7 @@ func TestLoadHeatData(t *testing.T) {
 
 		os.Setenv("GEOSERVER_URL", server.URL+"/")
 
-		repo := NewExternalWeatherHeatRepository()
+		repo := NewExternalTemperatureHeatRepository()
 
 		results, err := repo.LoadHeatData("3548906", "2020")
 

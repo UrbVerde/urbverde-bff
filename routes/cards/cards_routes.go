@@ -2,9 +2,9 @@
 package cards
 
 import (
-	controllers_cards_weather "urbverde-api/controllers/cards/weather"
-	repositories_cards_weather "urbverde-api/repositories/cards/weather"
-	services_cards_weather "urbverde-api/services/cards/weather"
+	controllers_cards_temperature "urbverde-api/controllers/cards/temperature"
+	repositories_cards_temperature "urbverde-api/repositories/cards/temperature"
+	services_cards_temperature "urbverde-api/services/cards/temperature"
 
 	controllers_cards_vegetal "urbverde-api/controllers/cards/vegetal"
 	repositories_cards_vegetal "urbverde-api/repositories/cards/vegetal"
@@ -41,16 +41,16 @@ type ErrorResponse struct {
 }
 
 func SetupCardsRoutes(rg *gin.RouterGroup) {
-	SetupWeatherRoutes(rg)
+	SetupTemperatureRoutes(rg)
 	SetupVegetalRoutes(rg)
 	SetupSquareRoutes(rg)
 }
 
-func SetupWeatherRoutes(rg *gin.RouterGroup) {
-	setupTemperatureRoutes(rg)
+func SetupTemperatureRoutes(rg *gin.RouterGroup) {
+	setupWeatherRoutes(rg)
 	setupHeatRoutes(rg)
-	setupWeatherRankingRoutes(rg)
-	setupWeatherInfoRoutes(rg)
+	setupTemperatureRankingRoutes(rg)
+	setupTemperatureInfoRoutes(rg)
 }
 
 func SetupVegetalRoutes(rg *gin.RouterGroup) {
@@ -69,73 +69,73 @@ func SetupSquareRoutes(rg *gin.RouterGroup) {
 
 // @Summary Retorna dados de temperatura
 // @Description Retorna os dados de temperatura para o município e ano fornecidos
-// @Tags cards/weather
+// @Tags cards/temperature
 // @Accept json
 // @Produce json
 // @Param city query string true "Código de município"
 // @Param year query string false "Ano dos dados"
 // @Success 200 {object} []CardsDataItem
 // @Failure 400 {object} ErrorResponse
-// @Router /cards/weather/temperature [get]
-func setupTemperatureRoutes(rg *gin.RouterGroup) {
-	tempeRepo := repositories_cards_weather.NewExternalWeatherTemperatureRepository()
-	tempeService := services_cards_weather.NewWeatherTemperatureService(tempeRepo)
-	tempeController := controllers_cards_weather.NewWeatherTemperatureController(tempeService)
+// @Router /cards/temperature/weather [get]
+func setupWeatherRoutes(rg *gin.RouterGroup) {
+	weatherRepo := repositories_cards_temperature.NewExternalTemperatureWeatherRepository()
+	weatherService := services_cards_temperature.NewTemperatureWeatherService(weatherRepo)
+	weatherController := controllers_cards_temperature.NewTemperatureWeatherController(weatherService)
 
-	rg.GET("/cards/weather/temperature", tempeController.LoadTemperatureData)
+	rg.GET("/cards/temperature/weather", weatherController.LoadWeatherData)
 }
 
 // @Summary Retorna dados de calor extremo
 // @Description Retorna os dados de calor extremo para o município e ano fornecidos
-// @Tags cards/weather
+// @Tags cards/temperature
 // @Accept json
 // @Produce json
 // @Param city query string true "Código de município"
 // @Param year query string false "Ano dos dados"
 // @Success 200 {object} []CardsDataItem
 // @Failure 400 {object} ErrorResponse
-// @Router /cards/weather/heat [get]
+// @Router /cards/temperature/heat [get]
 func setupHeatRoutes(rg *gin.RouterGroup) {
-	heatRepo := repositories_cards_weather.NewExternalWeatherHeatRepository()
-	heatService := services_cards_weather.NewWeatherHeatService(heatRepo)
-	heatController := controllers_cards_weather.NewWeatherHeatController(heatService)
+	heatRepo := repositories_cards_temperature.NewExternalTemperatureHeatRepository()
+	heatService := services_cards_temperature.NewTemperatureHeatService(heatRepo)
+	heatController := controllers_cards_temperature.NewTemperatureHeatController(heatService)
 
-	rg.GET("/cards/weather/heat", heatController.LoadHeatData)
+	rg.GET("/cards/temperature/heat", heatController.LoadHeatData)
 }
 
 // @Summary Retorna dados de ranking de clima
 // @Description Retorna os dados de ranking em clima para o município e ano fornecidos
-// @Tags cards/weather
+// @Tags cards/temperature
 // @Accept json
 // @Produce json
 // @Param city query string true "Código de município"
 // @Param year query string false "Ano dos dados"
 // @Success 200 {object} []RankingData
 // @Failure 400 {object} ErrorResponse
-// @Router /cards/weather/ranking [get]
-func setupWeatherRankingRoutes(rg *gin.RouterGroup) {
-	rankRepo := repositories_cards_weather.NewExternalWeatherRankingRepository()
-	rankService := services_cards_weather.NewWeatherRankingService(rankRepo)
-	rankController := controllers_cards_weather.NewWeatherRankingController(rankService)
+// @Router /cards/temperature/ranking [get]
+func setupTemperatureRankingRoutes(rg *gin.RouterGroup) {
+	rankRepo := repositories_cards_temperature.NewExternalTemperatureRankingRepository()
+	rankService := services_cards_temperature.NewTemperatureRankingService(rankRepo)
+	rankController := controllers_cards_temperature.NewTemperatureRankingController(rankService)
 
-	rg.GET("/cards/weather/ranking", rankController.LoadRankingData)
+	rg.GET("/cards/temperature/ranking", rankController.LoadRankingData)
 }
 
 // @Summary Retorna dados adicionais
 // @Description Retorna dados adicionais para o município fornecido
-// @Tags cards/weather
+// @Tags cards/temperature
 // @Accept json
 // @Produce json
 // @Param city query string true "Código de município"
 // @Success 200 {object} []CardsDataItem
 // @Failure 400 {object} ErrorResponse
-// @Router /cards/weather/info [get]
-func setupWeatherInfoRoutes(rg *gin.RouterGroup) {
-	infoRepo := repositories_cards_weather.NewExternalWeatherInfoRepository()
-	infoService := services_cards_weather.NewWeatherInfoService(infoRepo)
-	infoController := controllers_cards_weather.NewWeatherInfoController(infoService)
+// @Router /cards/temperature/info [get]
+func setupTemperatureInfoRoutes(rg *gin.RouterGroup) {
+	infoRepo := repositories_cards_temperature.NewExternalTemperatureInfoRepository()
+	infoService := services_cards_temperature.NewTemperatureInfoService(infoRepo)
+	infoController := controllers_cards_temperature.NewTemperatureInfoController(infoService)
 
-	rg.GET("/cards/weather/info", infoController.LoadInfoData)
+	rg.GET("/cards/temperature/info", infoController.LoadInfoData)
 }
 
 // @Summary Retorna dados relacionados à cobertura vegetal

@@ -1,5 +1,5 @@
-// urbverde-bff/repositories/cards/weather/weather_ranking_repository.go
-package repositories_cards_weather
+// urbverde-bff/repositories/cards/temperature/temperature_ranking_repository.go
+package repositories_cards_temperature
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type WeatherRankingRepository interface {
+type TemperatureRankingRepository interface {
 	cards_shared.RepositoryBase
 	LoadRankingData(city string, year string) ([]RankingData, error)
 }
@@ -48,11 +48,11 @@ type RankingData struct {
 	Items    []RankingDataItem `json:"items"`
 }
 
-type externalWeatherRankingRepository struct {
+type externalTemperatureRankingRepository struct {
 	geoserverURL string
 }
 
-func NewExternalWeatherRankingRepository() WeatherRankingRepository {
+func NewExternalTemperatureRankingRepository() TemperatureRankingRepository {
 	_ = godotenv.Load()
 
 	geoserverURL := os.Getenv("GEOSERVER_URL")
@@ -69,12 +69,12 @@ func NewExternalWeatherRankingRepository() WeatherRankingRepository {
 		cards_shared.CqlFilterPrefix,
 	)
 
-	return &externalWeatherRankingRepository{
+	return &externalTemperatureRankingRepository{
 		geoserverURL: geoserverURL,
 	}
 }
 
-func (r *externalWeatherRankingRepository) LoadYears(city string) ([]int, error) {
+func (r *externalTemperatureRankingRepository) LoadYears(city string) ([]int, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	processProperties := func(props map[string]interface{}) (int, error) {
@@ -88,7 +88,7 @@ func (r *externalWeatherRankingRepository) LoadYears(city string) ([]int, error)
 	return cards_shared.LoadYears(url, processProperties)
 }
 
-func (r *externalWeatherRankingRepository) LoadRankingData(city string, year string) ([]RankingData, error) {
+func (r *externalTemperatureRankingRepository) LoadRankingData(city string, year string) ([]RankingData, error) {
 	url := r.geoserverURL + city + "&outputFormat=application/json"
 
 	data, err := cards_shared.FetchFromURL(url)
