@@ -23,6 +23,55 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/address/data": {
+            "get": {
+                "description": "Retorna dados detalhados de localização",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "address"
+                ],
+                "summary": "Retorna dados de localização",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código da localização",
+                        "name": "code",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Nome ou nome de exibição da localização",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tipo da localização (state/city/country)",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/repositories_address.Location"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers_address.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/address/suggestions": {
             "get": {
                 "description": "Retorna sugestões baseadas nos dados fornecidos",
@@ -51,14 +100,184 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/address.AddressSuggestion"
+                                "$ref": "#/definitions/repositories_address.CityResponse"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/address.ErrorResponse"
+                            "$ref": "#/definitions/controllers_address.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/square/inequality": {
+            "get": {
+                "description": "Retorna dados de desigualdade para a camada",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/square"
+                ],
+                "summary": "Retorna dados sobre desigualdade",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/square/info": {
+            "get": {
+                "description": "Retorna dados adicionais para a camada",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/square"
+                ],
+                "summary": "Retorna dados adicionais para a camada de praças e parques",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/square/parks": {
+            "get": {
+                "description": "Retorna dados de parques e praças para a camada",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/square"
+                ],
+                "summary": "Retorna dados dos parques e praças",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/square/ranking": {
+            "get": {
+                "description": "Retorna dados para a construção do ranking de praças e parques",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/square"
+                ],
+                "summary": "Retorna dados de ranking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ano dos dados",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.RankingData"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
                         }
                     }
                 }
@@ -468,28 +687,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "address.AddressSuggestion": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "address.ErrorResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
         "cards.CardsDataItem": {
             "type": "object",
             "properties": {
@@ -553,6 +750,19 @@ const docTemplate = `{
                 }
             }
         },
+        "controllers_address.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "MISSING_PARAMETERS"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Erro ao processar a solicitação"
+                }
+            }
+        },
         "controllers_categories.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -563,6 +773,95 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "Erro ao processar a solicitação"
+                }
+            }
+        },
+        "repositories_address.CenterOpts": {
+            "type": "object",
+            "properties": {
+                "bbox": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "example": [
+                        -46.8264,
+                        -24.0082,
+                        -46.3652,
+                        -23.3566
+                    ]
+                },
+                "lat": {
+                    "type": "number",
+                    "example": -23.5505
+                },
+                "lng": {
+                    "type": "number",
+                    "example": -46.6333
+                },
+                "zoom": {
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "repositories_address.CityResponse": {
+            "description": "City suggestion response model",
+            "type": "object",
+            "properties": {
+                "cd_mun": {
+                    "description": "City ID for internal use",
+                    "type": "integer",
+                    "example": 3550308
+                },
+                "display_name": {
+                    "description": "What user sees: \"City Name - ST\"",
+                    "type": "string",
+                    "example": "São Paulo - SP"
+                }
+            }
+        },
+        "repositories_address.Location": {
+            "description": "Detailed location data model",
+            "type": "object",
+            "properties": {
+                "center_options": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/repositories_address.CenterOpts"
+                    }
+                },
+                "code": {
+                    "type": "string",
+                    "example": "3550308"
+                },
+                "country": {
+                    "type": "string",
+                    "example": "Brasil"
+                },
+                "country_code": {
+                    "type": "string",
+                    "example": "BR"
+                },
+                "display_name": {
+                    "type": "string",
+                    "example": "São Paulo - SP"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "São Paulo"
+                },
+                "state": {
+                    "type": "string",
+                    "example": "SP"
+                },
+                "state_name": {
+                    "type": "string",
+                    "example": "São Paulo"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "city"
                 }
             }
         },

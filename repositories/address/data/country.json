@@ -1,0 +1,35 @@
+{
+  "urbverde_metadata": {
+    "generated_at": "2025-01-29T10:58:23",
+    "generated_by": "Gustavo - UrbVerde",
+    "generated_through": "https://github.com/UrbVerde/urbverde-data/CenterCoordinates.ipynb"
+  },
+  "metadata": {
+    "url": "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2023/Brasil/BR_Pais_2023.zip",
+    "last_modified": "2024-12-15T21:17:50+00:00",
+    "size": 6065793,
+    "file_hash": "89f5f23e2c68f323587a0f5438522ce6",
+    "crs": "EPSG:4674"
+  },
+  "features": {
+    "BR": {
+      "name": "Brasil",
+      "display_name": "Brasil",
+      "type": "country",
+      "code": "BR",
+      "center_options": {
+        "default": {
+          "lat": -11.18363793833899,
+          "lng": -53.0094943489041,
+          "zoom": 2,
+          "bbox": [
+            -74.44187810099996,
+            -34.14140819099998,
+            -28.396211798999925,
+            5.662071291000075
+          ]
+        }
+      }
+    }
+  }
+}

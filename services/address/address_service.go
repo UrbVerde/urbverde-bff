@@ -1,4 +1,4 @@
-// urbverde-bff/services/address_service.go
+// urbverde-bff/services/address/address_service.go
 package services_address
 
 import (

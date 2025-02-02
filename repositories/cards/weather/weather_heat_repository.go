@@ -27,7 +27,7 @@ type HeatProperties struct {
 // Response JSON structure
 type HeatDataItem struct {
 	Title    string  `json:"title"`
-	Subtitle *string `json:"subtitle,omitempty"` // Omitir caso seja nil
+	Subtitle *string `json:"subtitle,omitempty"`
 	Value    string  `json:"value"`
 }
 
@@ -113,7 +113,6 @@ func (r *externalWeatherHeatRepository) LoadHeatData(city string, year string) (
 
 	heatProps := filtered.Properties.(HeatProperties)
 
-	// Values
 	black_indigenous_percentage := int(math.Round(heatProps.H12b * 100))
 	women_percentage := int(math.Round(heatProps.H11b * 100))
 	children_percentage := int(math.Round(heatProps.H10b * 100))
