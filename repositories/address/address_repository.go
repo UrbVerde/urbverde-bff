@@ -4,9 +4,9 @@ package repositories_address
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -48,40 +48,42 @@ func normalizeText(s string) string {
 }
 
 func (r *externalAddressRepository) SearchAddress(query string) ([]CityResponse, error) {
-	url := r.apiURL + "?nome=" + query
-
-	resp, err := http.Get(url)
+	// Load cities from local file instead of IBGE API
+	data, err := os.ReadFile("repositories/address/data/cities.json")
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("request failed with status: %d", resp.StatusCode)
+		return nil, fmt.Errorf("error reading cities file: %w", err)
 	}
 
-	var cities []IBGEResponse
-	if err := json.NewDecoder(resp.Body).Decode(&cities); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+	var citiesData LocationResponse
+	if err := json.Unmarshal(data, &citiesData); err != nil {
+		return nil, fmt.Errorf("error parsing cities data: %w", err)
 	}
 
-	var cityResponses []CityResponse
+	var results []CityResponse
 	normalizedQuery := normalizeText(query)
 
-	for _, city := range cities {
-		normalizedCityName := normalizeText(city.Nome)
+	// Search through local data
+	for code, city := range citiesData.Features {
+		normalizedCityName := normalizeText(city.Name)
 		if strings.HasPrefix(normalizedCityName, normalizedQuery) {
-			cityResponses = append(cityResponses, CityResponse{
-				DisplayName: fmt.Sprintf("%s - %s", city.Nome, city.Microrregiao.Mesorregiao.UF.Sigla),
-				CdMun:       city.ID,
+			// Convert string code to int
+			cdMun, err := strconv.Atoi(code)
+			if err != nil {
+				continue // Skip this entry if code can't be converted
+			}
+
+			results = append(results, CityResponse{
+				DisplayName: city.DisplayName,
+				CdMun:       cdMun,
+				Type:        "city", // Add this line
 			})
 		}
 	}
 
-	// Sort cityResponses alphabetically by DisplayName
-	sort.Slice(cityResponses, func(i, j int) bool {
-		return cityResponses[i].DisplayName < cityResponses[j].DisplayName
+	// Sort results
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].DisplayName < results[j].DisplayName
 	})
 
-	return cityResponses, nil
+	return results, nil
 }
