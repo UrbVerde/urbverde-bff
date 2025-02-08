@@ -6,6 +6,7 @@ package repositories_address
 type CityResponse struct {
 	DisplayName string `json:"display_name" example:"São Paulo - SP"` // What user sees: "City Name - ST"
 	CdMun       int    `json:"cd_mun" example:"3550308"`              // City ID for internal use
+	Type        string `json:"type" example:"city"`                   // Type of location
 }
 
 // Location represents a detailed location response

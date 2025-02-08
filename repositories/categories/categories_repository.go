@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 //go:embed data/*.json
@@ -131,22 +130,22 @@ func (r *categoriesRepository) GetCategories(cityCode string) (*CategoriesRespon
 		return nil, fmt.Errorf("error unmarshaling categories clone: %w", err)
 	}
 
-	// Check if it's a São Paulo state city (starts with 35)
-	isSaoPauloState := strings.HasPrefix(cityCode, "35")
-	if !isSaoPauloState {
-		// Filter categories for non-São Paulo cities
-		var filteredCategories []Category
-		for _, category := range response.Categories {
-			if category.ID == "parks" || category.ID == "census" || category.ID == "transport" {
-				filteredCategories = append(filteredCategories, category)
-			}
-		}
-		response.Categories = filteredCategories
-		return &response, nil
-	}
+	// // Check if it's a São Paulo state city (starts with 35)
+	// isSaoPauloState := strings.HasPrefix(cityCode, "35")
+	// if !isSaoPauloState {
+	// 	// Filter categories for non-São Paulo cities
+	// 	var filteredCategories []Category
+	// 	for _, category := range response.Categories {
+	// 		if category.ID == "parks" || category.ID == "census" || category.ID == "transport" {
+	// 			filteredCategories = append(filteredCategories, category)
+	// 		}
+	// 	}
+	// 	response.Categories = filteredCategories
+	// 	return &response, nil
+	// }
 
-	// Add any exclusive layers for this city
-	r.addExclusiveLayers(&response, cityCode)
+	// // Add any exclusive layers for this city
+	// r.addExclusiveLayers(&response, cityCode)
 
 	return &response, nil
 }

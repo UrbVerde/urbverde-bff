@@ -1,0 +1,103 @@
+{
+    "categories": [
+      {
+        "id": "climate",
+        "name": "Clima",
+        "icon": "Snowy Sunny Day.svg",
+        "layers": [
+          {"id": "surface_temp", "name": "Temperatura de superfície", "isPartner": false, "isNew": true},
+          {"id": "max_surface_temp", "name": "Temperatura máxima de superfície", "isPartner": false, "isNew": false},
+          {"id": "heat_island", "name": "Nível de exposição à ilha de calor", "isPartner": false, "isNew": false}
+        ]
+      },
+      {
+        "id": "vegetation",
+        "name": "Vegetação",
+        "icon": "Oak Tree.svg",
+        "layers": [
+          {"id": "pcv", "name": "Coberta vegetal (PCV)", "isPartner": false, "isNew": false},
+          {"id": "icv", "name": "Cobertura vegetal por habitante (ICV)", "isPartner": false, "isNew": false},
+          {"id": "idsa", "name": "Desigualdade sociambiental (IDSA)", "isPartner": false, "isNew": false},
+          {"id": "cvp", "name": "Cobertura vegetal por pixel", "isPartner": false, "isNew": false},
+          {"id": "ndvi", "name": "Vigor da vegetação (NDVI)", "isPartner": false, "isNew": false}
+        ]
+      },
+      {
+        "id": "parks",
+        "name": "Parques e Praças",
+        "icon": "Nature.svg",
+        "layers": [
+          {"id": "park_distribution", "name": "Distribuição dos parques", "isPartner": false, "isNew": false},
+          {"id": "green_area_per_capita", "name": "Área verde por habitante", "isPartner": false, "isNew": false},
+          {"id": "green_area_accessibility", "name": "Acessibilidade a áreas verdes", "isPartner": false, "isNew": false}
+        ]
+      },
+      {
+        "id": "emissions",
+        "name": "Emissões",
+        "icon": "Central Heating.svg",
+        "layers": [
+          {"id": "co2_emissions", "name": "Emissões de CO2", "isPartner": false, "isNew": true},
+          {"id": "co2_capture", "name": "Captura Emissões de CO2 per capita", "isPartner": false, "isNew": false},
+          {"id": "co2_emissions", "name": "Poluição do ar", "isPartner": false, "isNew": false}
+        ]
+      },
+      {
+        "id": "urban_empty_lots",
+        "name": "Lotes Urbanos",
+        "icon": "Field.svg",
+        "layers": [
+          {"id": "empty_lots_distribution", "name": "Lotes Vazios", "isPartner": false, "isNew": true},
+          {"id": "potential_uses", "name": "Áreas Residuais", "isPartner": false, "isNew": false}
+        ]
+      },
+      {
+        "id": "water",
+        "name": "Águas",
+        "icon": "Water Element.svg",
+        "layers": [
+          {"id": "flood_areas", "name": "Áreas Inundáveis", "isPartner": false, "isNew": true},
+          {"id": "dam_flood_areas", "name": "Barragens", "isPartner": false, "isNew": true},
+          {"id": "water_quality", "name": "Qualidade da água", "isPartner": false, "isNew": false},
+          {"id": "water_supply", "name": "Abastecimento de água", "isPartner": false, "isNew": false},
+          {"id": "water_sewerage", "name": "Esgotamento sanitário", "isPartner": false, "isNew": false}
+        ]
+      },
+      {
+        "id": "transport",
+        "name": "Mobilidade",
+        "icon": "bi bi-bicycle",
+        "layers": [
+          {"id": "bike_lanes", "name": "Ciclovias", "isPartner": false, "isNew": true}
+        ]
+      },
+      {
+        "id": "agriculture",
+        "name": "Agricultura Urbana",
+        "icon": "Soil.svg",
+        "layers": [
+          {"id": "urban_garden", "name": "Hortas Urbanas", "isPartner": false, "isNew": true}
+        ]
+      },
+      {
+        "id": "census",
+        "name": "Censo",
+        "icon": "bi bi-people",
+        "layers": [
+          {"id": "population", "name": "População", "isPartner": false, "isNew": false},
+          {"id": "revenue", "name": "Renda per capita", "isPartner": false, "isNew": false},
+          {"id": "age", "name": "Idade", "isPartner": false, "isNew": false},
+          {"id": "race", "name": "Raça/Cor", "isPartner": false, "isNew": false}
+        ]
+      },
+      {
+        "id": "others",
+        "name": "Outros",
+        "icon": "bi bi-lightbulb",
+        "layers": [
+          {"id": "public_lighting", "name": "Iluminação Pública", "isPartner": false, "isNew": false},
+          {"id": "institutional_areas", "name": "Áreas Institucionais", "isPartner": false, "isNew": false}
+        ]
+      }
+    ]
+  }

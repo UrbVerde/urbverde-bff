@@ -1,0 +1,3883 @@
+--- DIRECTORY STRUCTURE ---
+
+|-- Dockerfile
+|-- README.md
+|-- controllers
+|   |-- address
+|   |   |-- address_controller.go
+|   |   `-- address_data_controller.go
+|   |-- cards
+|   |   `-- weather
+|   |       |-- weather_heat_controller.go
+|   |       |-- weather_info_controller.go
+|   |       |-- weather_ranking_controller.go
+|   |       `-- weather_temperature_controller.go
+|   `-- categories
+|       `-- categories_controller.go
+|-- docker-compose.yml
+|-- docs
+|   |-- docs.go
+|   |-- swagger.json
+|   `-- swagger.yaml
+|-- go.mod
+|-- go.sum
+|-- main.go
+|-- repositories
+|   |-- address
+|   |   |-- address_data_repository.go
+|   |   |-- address_repository.go
+|   |   |-- address_repository_test.go
+|   |   |-- data
+|   |   |   |-- cities.json
+|   |   |   |-- country.json
+|   |   |   `-- states.json
+|   |   `-- models.go
+|   |-- cards
+|   |   |-- shared_repository.go
+|   |   `-- weather
+|   |       |-- weather_heat_repository.go
+|   |       |-- weather_heat_repository_test.go
+|   |       |-- weather_info_repository.go
+|   |       |-- weather_ranking_repository.go
+|   |       |-- weather_ranking_repository_test.go
+|   |       |-- weather_temperature_repository.go
+|   |       `-- weather_temperature_repository_test.go
+|   `-- categories
+|       |-- categories_repository.go
+|       `-- data
+|           |-- base_categories.json
+|           `-- exclusive_layers.json
+|-- routes
+|   |-- address
+|   |   `-- address_routes.go
+|   |-- cards
+|   |   `-- cards_routes.go
+|   |-- categories
+|   |   `-- categories_routes.go
+|   `-- router.go
+|-- services
+|   |-- address
+|   |   |-- address_data_service.go
+|   |   `-- address_service.go
+|   |-- cards
+|   |   `-- weather
+|   |       |-- weather_heat_service.go
+|   |       |-- weather_info_service.go
+|   |       |-- weather_ranking_service.go
+|   |       `-- weather_temperature_service.go
+|   `-- categories
+|       `-- categories_service.go
+`-- utils
+    `-- utils.go
+
+23 directories, 46 files
+
+--- FILE CONTENTS ---
+
+---
+# urbverde-bff/.env
+# Always use github secrets for sensitive values 
+# This .env is for NON-SENSITIVE values ONLY
+IBGE_API_URL=https://servicodados.ibge.gov.br/api/v1/localidades/municipios
+ENV=development
+GEOSERVER_URL=https://urbverde.iau.usp.br/geoserver/urbverde/
+
+---
+# urbverde-bff/.github/workflows/deploy.yml
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and Push Docker Image
+      run: |
+        # Create a timestamp tag
+        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+
+        # Build with both latest and timestamped tags
+        docker build \
+        --build-arg ENV=production \
+        -t ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest \
+        -t ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:$TIMESTAMP \
+        .        
+
+        # Push both tags
+        docker push ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/urbverde-bff:$TIMESTAMP
+
+        # Save the timestamp for the deployment step
+        echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+
+    - name: Deploy to Production Server
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        password: ${{ secrets.PRODUCTION_PASSWORD }}
+        port: ${{ secrets.PRODUCTION_PORT }}
+        script: |
+          # Go to our stack directory
+          cd /home/${{ secrets.PRODUCTION_USER }}/sphere-api-stack
+          
+          # Record deployment version
+          echo "$TIMESTAMP" > urbverde-bff-version.txt
+
+          # If we have a record of a previous version, show it
+          if [ -f "urbverde-bff-version.txt" ]; then
+            PREV_VERSION=$(cat urbverde-bff-version.txt)
+            echo "Previous version was: $PREV_VERSION"
+          fi
+          
+          # Clone or update the urbverde-bff repo code
+          if [ ! -d "urbverde-bff" ]; then
+            git clone https://${{ secrets.REPO_ACCESS_TOKEN }}@github.com/UrbVerde/urbverde-bff.git urbverde-bff
+          else
+            cd urbverde-bff
+            git fetch origin main
+            git reset --hard origin/main
+            cd ..
+          fi
+
+          # Create or update production .env file
+          # Update ENV in .env file without removing other variables
+          if [ -f ./urbverde-bff/.env ]; then
+            # Remove any existing ENV line
+            sed -i '/^ENV=/d' ./urbverde-bff/.env
+            # Add new ENV line
+            echo "ENV=production" >> ./urbverde-bff/.env
+          else
+            # Create new .env if it doesn't exist
+            echo "ENV=production" > ./urbverde-bff/.env
+            echo "IBGE_API_URL=https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=" >> ./urbverde-bff/.env
+          fi
+
+          # Build and deploy
+          cd urbverde-bff
+          docker build \
+            --build-arg ENV=production \
+            -t urbverde-bff:latest \
+            .
+          cd ..
+            
+          # Deploy new version using docker-compose
+          ENV=production docker-compose up -d --no-deps --build urbverde-bff
+
+          # docker-compose pull urbverde-bff
+
+---
+# urbverde-bff/.github/workflows/pull_request.yml
+name: Pull Request Workflow
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.23
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Run tests
+        run: go test ./... -v
+
+---
+# urbverde-bff/.gitignore
+.urbverde-bff_flatten
+.urbverde-bff_flatten
+*_flatten
+
+---
+# urbverde-bff/Dockerfile
+FROM golang:1.23-alpine AS builder
+
+# Install tools and dependencies
+RUN apk add --no-cache git bash
+
+# Install swag CLI
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+
+# Set the environment argument (default: develop)
+ARG ENV=develop
+ENV ENV=${ENV}
+
+# Define the working directory in the container
+WORKDIR /app
+
+# Copy the source code and dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+
+# Set the API host based on environment and generate docs
+RUN if [ "$ENV" = "production" ]; then \
+      export API_HOST="api.urbverde.com.br"; \
+    else \
+      export API_HOST="localhost:8080"; \
+    fi && \
+    sed -i "s|@host.*|@host ${API_HOST}|" main.go && \
+    swag init --g main.go --output docs
+
+# Build the application binary
+RUN go build -o urbverde-bff
+
+# Start a minimal runtime image
+FROM alpine:latest
+WORKDIR /app
+
+# Copy the binary and docs
+COPY --from=builder /app/urbverde-bff .
+COPY --from=builder /app/docs /app/docs_source
+COPY --from=builder /app/repositories/address/data /app/repositories/address/data
+COPY --from=builder /app/repositories/categories/data /app/repositories/categories/data
+
+# Ensure directories exist and have correct permissions
+RUN mkdir -p /app/docs && \
+    chmod -R 777 /app/docs && \
+    chmod -R 777 /app/docs_source && \
+    chmod -R 755 /app/repositories
+
+EXPOSE 8080
+
+# Copy docs to mounted volume on container start
+CMD cp -r /app/docs_source/* /app/docs/ && ./urbverde-bff
+
+---
+<!-- urbverde-bff/README.md -->
+
+# UrbVerde API
+
+API desenvolvida em Go para fornecer sugestões de endereço e outros serviços relacionados.
+
+## Pré-requisitos
+
+- [Go](https://golang.org/doc/install) 1.16 ou superior
+- [Docker](https://www.docker.com/) e [Docker Compose](https://docs.docker.com/compose/)
+
+## Como Rodar a API Localmente
+
+### Opção 1: Rodar Localmente com Go
+
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/UrbVerde/urbverde-bff.git
+   cd urbverde-bff
+   ```
+
+2. Instale as dependências listadas no `go.mod`:
+   ```bash
+   go mod download
+   go mod tidy
+   ```
+
+3. Inicie o servidor:
+   ```bash
+   go run main.go
+   ```
+
+4. Acesse a API localmente em `http://localhost:8080/v1/address/suggestions`.
+
+### Opção 2: Rodar com Docker Compose
+
+1. Certifique-se de ter o Docker e Docker Compose instalados.
+
+2. Para construir e rodar o projeto com Docker Compose:
+   ```bash
+   docker-compose up --build
+   ```
+
+3. Para testar o swagger com a api online use:
+   ```bash
+   ENV=production docker-compose build && docker-compose up -d 
+   ```
+
+5. A API estará acessível em `http://localhost:8080/`.
+
+## Documentação Swagger
+
+A API possui documentação interativa utilizando o Swagger, que pode ser gerada e atualizada automaticamente com base nos comentários do código.
+
+### Como acessar a documentação Swagger
+
+1. Certifique-se de que a API esteja rodando localmente.
+2. Acesse a interface do Swagger no navegador em:
+   [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
+3. Explore os endpoints documentados e teste as funcionalidades diretamente pela interface do Swagger.
+
+### Como atualizar a documentação Swagger
+
+Se houver mudanças nas rotas ou nos controladores, você precisará atualizar a documentação Swagger:
+
+1. Certifique-se de que o **Swag CLI** está instalado. Se ainda não estiver, instale com:
+   ```bash
+   go install github.com/swaggo/swag/cmd/swag@latest
+   ```
+2. Gere ou atualize os arquivos de documentação com o comando:
+   ```bash
+   swag init
+   ```
+3. Certifique-se de que a pasta `docs/` foi atualizada corretamente. Essa pasta contém os arquivos `swagger.json` e `swagger.yaml` utilizados pelo Swagger.
+
+---
+// urbverde-bff/controllers/address/address_controller.go
+package controllers_address
+
+import (
+	"net/http"
+	services_address "urbverde-api/services/address"
+
+	"github.com/gin-gonic/gin"
+)
+
+type AddressController struct {
+	AddressService services_address.AddressService
+}
+
+func NewAddressController(service services_address.AddressService) *AddressController {
+	return &AddressController{
+		AddressService: service,
+	}
+}
+
+// GetSuggestions returns city suggestions based on query
+// @Summary Retorna sugestões de endereço
+// @Description Retorna sugestões baseadas nos dados fornecidos
+// @Tags address
+// @Accept json
+// @Produce json
+// @Param query query string true "Texto para buscar sugestões"
+// @Success 200 {array} repositories_address.CityResponse
+// @Failure 400 {object} ErrorResponse
+// @Router /address/suggestions [get]
+func (ac *AddressController) GetSuggestions(c *gin.Context) {
+	query := c.Query("query")
+
+	suggestions, err := ac.AddressService.GetSuggestions(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Erro ao buscar sugestões",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, suggestions)
+}
+
+---
+// urbverde-bff/controllers/address/address_data_controller.go
+package controllers_address
+
+import (
+	"net/http"
+	services_address "urbverde-api/services/address"
+
+	"github.com/gin-gonic/gin"
+)
+
+type ErrorResponse struct {
+	Message string `json:"message" example:"Erro ao processar a solicitação"`
+	Error   string `json:"error" example:"MISSING_PARAMETERS"`
+}
+
+type AddressDataController struct {
+	AddressDataService services_address.AddressDataService
+}
+
+func NewAddressDataController(service services_address.AddressDataService) *AddressDataController {
+	return &AddressDataController{
+		AddressDataService: service,
+	}
+}
+
+// GetLocationData returns detailed location data
+// @Summary Retorna dados de localização
+// @Description Retorna dados detalhados de localização
+// @Tags address
+// @Accept json
+// @Produce json
+// @Param code query string false "Código da localização"
+// @Param name query string false "Nome ou nome de exibição da localização"
+// @Param type query string false "Tipo da localização (state/city/country)"
+// @Success 200 {object} repositories_address.Location
+// @Failure 400 {object} ErrorResponse
+// @Router /address/data [get]
+func (ac *AddressDataController) GetLocationData(c *gin.Context) {
+	identifier := c.Query("code")
+	if identifier == "" {
+		identifier = c.Query("name") // Allow lookup by name if code is not provided
+	}
+
+	if identifier == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Either location code or name is required",
+			"error":   "MISSING_IDENTIFIER",
+		})
+		return
+	}
+
+	locationType := c.Query("type") // Optional, will be guessed if not provided
+
+	locationData, err := ac.AddressDataService.GetLocationData(identifier, locationType)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error fetching location data",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, locationData)
+}
+
+---
+// urbverde-bff/controllers/cards/weather/weather_heat_controller.go
+package controllers_cards_weather
+
+import (
+	"net/http"
+	services_cards_weather "urbverde-api/services/cards/weather"
+
+	"github.com/gin-gonic/gin"
+)
+
+type WeatherHeatController struct {
+	WeatherHeatService services_cards_weather.WeatherHeatService
+}
+
+func NewWeatherHeatController(service services_cards_weather.WeatherHeatService) *WeatherHeatController {
+	return &WeatherHeatController{
+		WeatherHeatService: service,
+	}
+}
+
+func (ac *WeatherHeatController) LoadHeatData(c *gin.Context) {
+	city := c.Query("city")
+	year := c.Query("year")
+
+	if year != "" {
+		data, err := ac.WeatherHeatService.LoadHeatData(city, year)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Erro ao buscar dados de temperatura",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, data)
+	} else {
+		data, err := ac.WeatherHeatService.LoadYears(city)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Erro ao buscar anos disponíveis de temperatura",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, data)
+	}
+}
+
+---
+// urbverde-bff/controllers/cards/weather/weather_info_controller.go
+package controllers_cards_weather
+
+import (
+	"net/http"
+	services_cards_weather "urbverde-api/services/cards/weather"
+
+	"github.com/gin-gonic/gin"
+)
+
+type WeatherInfoController struct {
+	WeatherInfoService services_cards_weather.WeatherInfoService
+}
+
+func NewWeatherInfoController(service services_cards_weather.WeatherInfoService) *WeatherInfoController {
+	return &WeatherInfoController{
+		WeatherInfoService: service,
+	}
+}
+
+func (ac *WeatherInfoController) LoadInfoData(c *gin.Context) {
+	city := c.Query("city")
+
+	data, err := ac.WeatherInfoService.LoadInfoData(city)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Erro ao buscar dados de temperatura",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, data)
+}
+
+---
+// urbverde-bff/controllers/cards/weather/weather_ranking_controller.go
+package controllers_cards_weather
+
+import (
+	"net/http"
+	services_cards_weather "urbverde-api/services/cards/weather"
+
+	"github.com/gin-gonic/gin"
+)
+
+type WeatherRankingController struct {
+	WeatherRankingService services_cards_weather.WeatherRankingService
+}
+
+func NewWeatherRankingController(service services_cards_weather.WeatherRankingService) *WeatherRankingController {
+	return &WeatherRankingController{
+		WeatherRankingService: service,
+	}
+}
+
+func (ac *WeatherRankingController) LoadRankingData(c *gin.Context) {
+	city := c.Query("city")
+	year := c.Query("year")
+
+	if year != "" {
+		data, err := ac.WeatherRankingService.LoadRankingData(city, year)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Erro ao buscar dados de temperatura",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, data)
+	} else {
+		data, err := ac.WeatherRankingService.LoadYears(city)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Erro ao buscar anos disponíveis de temperatura",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, data)
+	}
+}
+
+---
+// urbverde-bff/controllers/cards/weather/weather_temperature_controller.go
+package controllers_cards_weather
+
+import (
+	"net/http"
+	services_cards_weather "urbverde-api/services/cards/weather"
+
+	"github.com/gin-gonic/gin"
+)
+
+type WeatherTemperatureController struct {
+	WeatherTemperatureService services_cards_weather.WeatherTemperatureService
+}
+
+func NewWeatherTemperatureController(service services_cards_weather.WeatherTemperatureService) *WeatherTemperatureController {
+	return &WeatherTemperatureController{
+		WeatherTemperatureService: service,
+	}
+}
+
+func (ac *WeatherTemperatureController) LoadTemperatureData(c *gin.Context) {
+	city := c.Query("city")
+	year := c.Query("year")
+
+	if year != "" {
+		data, err := ac.WeatherTemperatureService.LoadTemperatureData(city, year)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Erro ao buscar dados de temperatura",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, data)
+	} else {
+		data, err := ac.WeatherTemperatureService.LoadYears(city)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Erro ao buscar anos disponíveis de temperatura",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, data)
+	}
+}
+
+---
+// urbverde-bff/controllers/categories/categories_controller.go
+package controllers_categories
+
+import (
+	"net/http"
+	services_categories "urbverde-api/services/categories"
+
+	"github.com/gin-gonic/gin"
+)
+
+type ErrorResponse struct {
+	Message string `json:"message" example:"Erro ao processar a solicitação"`
+	Code    int    `json:"code" example:"400"`
+}
+
+type CategoriesController struct {
+	CategoriesService services_categories.CategoriesService
+}
+
+func NewCategoriesController(service services_categories.CategoriesService) *CategoriesController {
+	return &CategoriesController{
+		CategoriesService: service,
+	}
+}
+
+// @Summary Retorna categorias disponíveis
+// @Description Retorna as categorias e camadas disponíveis para o município
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Param city query string true "Código do município"
+// @Success 200 {object} repositories_categories.CategoriesResponse
+// @Failure 400 {object} ErrorResponse
+// @Router /categories [get]
+func (cc *CategoriesController) GetCategories(c *gin.Context) {
+	cityCode := c.Query("city")
+
+	if cityCode == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "City code is required",
+			"error":   "MISSING_CITY",
+		})
+		return
+	}
+
+	categories, err := cc.CategoriesService.GetCategories(cityCode)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error fetching categories",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, categories)
+}
+
+---
+# urbverde-bff/docker-compose.yml
+version: "3.8"
+
+services:
+  urbverde-bff:
+    build:
+      context: .
+      args:
+        ENV: ${ENV:-develop}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docs:/app/docs:rw  # Added :rw flag to ensure read-write permissions
+    environment:
+      - ENV=${ENV:-develop}
+    env_file:
+      - .env
+
+---
+// Package docs Code generated by swaggo/swag. DO NOT EDIT
+package docs
+
+import "github.com/swaggo/swag"
+
+const docTemplate = `{
+    "schemes": {{ marshal .Schemes }},
+    "swagger": "2.0",
+    "info": {
+        "description": "{{escape .Description}}",
+        "title": "{{.Title}}",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.urbverde.com.br/",
+            "email": "comunica.urbverde@usp.br"
+        },
+        "license": {
+            "name": "???",
+            "url": "???"
+        },
+        "version": "{{.Version}}"
+    },
+    "host": "{{.Host}}",
+    "basePath": "{{.BasePath}}",
+    "paths": {
+        "/address/data": {
+            "get": {
+                "description": "Retorna dados detalhados de localização",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "address"
+                ],
+                "summary": "Retorna dados de localização",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código da localização",
+                        "name": "code",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Nome ou nome de exibição da localização",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tipo da localização (state/city/country)",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/repositories_address.Location"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers_address.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/address/suggestions": {
+            "get": {
+                "description": "Retorna sugestões baseadas nos dados fornecidos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "address"
+                ],
+                "summary": "Retorna sugestões de endereço",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Texto para buscar sugestões",
+                        "name": "query",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/repositories_address.CityResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers_address.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/weather/heat": {
+            "get": {
+                "description": "Retorna os dados de calor extremo para o município e ano fornecidos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/weather"
+                ],
+                "summary": "Retorna dados de calor extremo",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ano dos dados",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/weather/info": {
+            "get": {
+                "description": "Retorna dados adicionais para o município fornecido",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/weather"
+                ],
+                "summary": "Retorna dados adicionais",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/weather/ranking": {
+            "get": {
+                "description": "Retorna os dados de ranking em clima para o município e ano fornecidos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/weather"
+                ],
+                "summary": "Retorna dados de ranking de clima",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ano dos dados",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.RankingData"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cards/weather/temperature": {
+            "get": {
+                "description": "Retorna os dados de temperatura para o município e ano fornecidos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards/weather"
+                ],
+                "summary": "Retorna dados de temperatura",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código de município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ano dos dados",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cards.CardsDataItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/cards.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/categories": {
+            "get": {
+                "description": "Retorna as categorias e camadas disponíveis para o município",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Retorna categorias disponíveis",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Código do município",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/repositories_categories.CategoriesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers_categories.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "cards.CardsDataItem": {
+            "type": "object",
+            "properties": {
+                "subtitle": {
+                    "type": "string",
+                    "example": "Abaixo da média nacional de 0"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Nível de ilha de calor"
+                },
+                "value": {
+                    "type": "string",
+                    "example": "25°C"
+                }
+            }
+        },
+        "cards.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Erro ao processar a solicitação"
+                }
+            }
+        },
+        "cards.RankingData": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cards.RankingDataItem"
+                    }
+                },
+                "subtitle": {
+                    "type": "string",
+                    "example": "Posição do seu município entre os 645 do Estado de São Paulo"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Municipios do Estado"
+                }
+            }
+        },
+        "cards.RankingDataItem": {
+            "type": "object",
+            "properties": {
+                "number": {
+                    "type": "integer"
+                },
+                "of": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "controllers_address.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "MISSING_PARAMETERS"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Erro ao processar a solicitação"
+                }
+            }
+        },
+        "controllers_categories.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Erro ao processar a solicitação"
+                }
+            }
+        },
+        "repositories_address.CenterOpts": {
+            "type": "object",
+            "properties": {
+                "bbox": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "example": [
+                        -46.8264,
+                        -24.0082,
+                        -46.3652,
+                        -23.3566
+                    ]
+                },
+                "lat": {
+                    "type": "number",
+                    "example": -23.5505
+                },
+                "lng": {
+                    "type": "number",
+                    "example": -46.6333
+                },
+                "zoom": {
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "repositories_address.CityResponse": {
+            "description": "City suggestion response model",
+            "type": "object",
+            "properties": {
+                "cd_mun": {
+                    "description": "City ID for internal use",
+                    "type": "integer",
+                    "example": 3550308
+                },
+                "display_name": {
+                    "description": "What user sees: \"City Name - ST\"",
+                    "type": "string",
+                    "example": "São Paulo - SP"
+                }
+            }
+        },
+        "repositories_address.Location": {
+            "description": "Detailed location data model",
+            "type": "object",
+            "properties": {
+                "center_options": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/repositories_address.CenterOpts"
+                    }
+                },
+                "code": {
+                    "type": "string",
+                    "example": "3550308"
+                },
+                "country": {
+                    "type": "string",
+                    "example": "Brasil"
+                },
+                "country_code": {
+                    "type": "string",
+                    "example": "BR"
+                },
+                "display_name": {
+                    "type": "string",
+                    "example": "São Paulo - SP"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "São Paulo"
+                },
+                "state": {
+                    "type": "string",
+                    "example": "SP"
+                },
+                "state_name": {
+                    "type": "string",
+                    "example": "São Paulo"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "city"
+                }
+            }
+        },
+        "repositories_categories.CategoriesResponse": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repositories_categories.Category"
+                    }
+                }
+            }
+        },
+        "repositories_categories.Category": {
+            "type": "object",
+            "properties": {
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repositories_categories.Layer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "repositories_categories.Layer": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "isNew": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}`
+
+// SwaggerInfo holds exported Swagger Info so clients can modify it
+var SwaggerInfo = &swag.Spec{
+	Version:          "1.0",
+	Host:             "localhost:8080",
+	BasePath:         "/v1",
+	Schemes:          []string{},
+	Title:            "UrbVerde BFF",
+	Description:      "API para fornecer sugestões de endereço e outros serviços relacionados",
+	InfoInstanceName: "swagger",
+	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
+}
+
+func init() {
+	swag.Register(SwaggerInfo.InstanceName(), SwaggerInfo)
+}
+
+---
+// urbverde-bff/docs/swagger.json
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API para fornecer sugestões de endereço e outros serviços relacionados",
+        "title": "UrbVerde BFF",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.urbverde.com.br/",
+            "email": "comunica.urbverde@usp.br"
+        },
+  ...
+
+---
+basePath: /v1
+definitions:
+  cards.CardsDataItem:
+    properties:
+      subtitle:
+        example: Abaixo da média nacional de 0
+        type: string
+      title:
+        example: Nível de ilha de calor
+        type: string
+      value:
+        example: 25°C
+        type: string
+    type: object
+  cards.ErrorResponse:
+    properties:
+      code:
+        example: 400
+        type: integer
+      message:
+        example: Erro ao processar a solicitação
+        type: string
+    type: object
+  cards.RankingData:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/cards.RankingDataItem'
+        type: array
+      subtitle:
+        example: Posição do seu município entre os 645 do Estado de São Paulo
+        type: string
+      title:
+        example: Municipios do Estado
+        type: string
+    type: object
+  cards.RankingDataItem:
+    properties:
+      number:
+        type: integer
+      of:
+        type: integer
+      type:
+        type: string
+    type: object
+  controllers_address.ErrorResponse:
+    properties:
+      error:
+        example: MISSING_PARAMETERS
+        type: string
+      message:
+        example: Erro ao processar a solicitação
+        type: string
+    type: object
+  controllers_categories.ErrorResponse:
+    properties:
+      code:
+        example: 400
+        type: integer
+      message:
+        example: Erro ao processar a solicitação
+        type: string
+    type: object
+  repositories_address.CenterOpts:
+    properties:
+      bbox:
+        example:
+        - -46.8264
+        - -24.0082
+        - -46.3652
+        - -23.3566
+        items:
+          type: number
+        type: array
+      lat:
+        example: -23.5505
+        type: number
+      lng:
+        example: -46.6333
+        type: number
+      zoom:
+        example: 10
+        type: integer
+    type: object
+  repositories_address.CityResponse:
+    description: City suggestion response model
+    properties:
+      cd_mun:
+        description: City ID for internal use
+        example: 3550308
+        type: integer
+      display_name:
+        description: 'What user sees: "City Name - ST"'
+        example: São Paulo - SP
+        type: string
+    type: object
+  repositories_address.Location:
+    description: Detailed location data model
+    properties:
+      center_options:
+        additionalProperties:
+          $ref: '#/definitions/repositories_address.CenterOpts'
+        type: object
+      code:
+        example: "3550308"
+        type: string
+      country:
+        example: Brasil
+        type: string
+      country_code:
+        example: BR
+        type: string
+      display_name:
+        example: São Paulo - SP
+        type: string
+      name:
+        example: São Paulo
+        type: string
+      state:
+        example: SP
+        type: string
+      state_name:
+        example: São Paulo
+        type: string
+      type:
+        example: city
+        type: string
+    type: object
+  repositories_categories.CategoriesResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/repositories_categories.Category'
+        type: array
+    type: object
+  repositories_categories.Category:
+    properties:
+      icon:
+        type: string
+      id:
+        type: string
+      layers:
+        items:
+          $ref: '#/definitions/repositories_categories.Layer'
+        type: array
+      name:
+        type: string
+    type: object
+  repositories_categories.Layer:
+    properties:
+      id:
+        type: string
+      isActive:
+        type: boolean
+      isNew:
+        type: boolean
+      name:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: comunica.urbverde@usp.br
+    name: API Support
+    url: http://www.urbverde.com.br/
+  description: API para fornecer sugestões de endereço e outros serviços relacionados
+  license:
+    name: ???
+    url: ???
+  title: UrbVerde BFF
+  version: "1.0"
+paths:
+  /address/data:
+    get:
+      consumes:
+      - application/json
+      description: Retorna dados detalhados de localização
+      parameters:
+      - description: Código da localização
+        in: query
+        name: code
+        type: string
+      - description: Nome ou nome de exibição da localização
+        in: query
+        name: name
+        type: string
+      - description: Tipo da localização (state/city/country)
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repositories_address.Location'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers_address.ErrorResponse'
+      summary: Retorna dados de localização
+      tags:
+      - address
+  /address/suggestions:
+    get:
+      consumes:
+      - application/json
+      description: Retorna sugestões baseadas nos dados fornecidos
+      parameters:
+      - description: Texto para buscar sugestões
+        in: query
+        name: query
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/repositories_address.CityResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers_address.ErrorResponse'
+      summary: Retorna sugestões de endereço
+      tags:
+      - address
+  /cards/weather/heat:
+    get:
+      consumes:
+      - application/json
+      description: Retorna os dados de calor extremo para o município e ano fornecidos
+      parameters:
+      - description: Código de município
+        in: query
+        name: city
+        required: true
+        type: string
+      - description: Ano dos dados
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/cards.CardsDataItem'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/cards.ErrorResponse'
+      summary: Retorna dados de calor extremo
+      tags:
+      - cards/weather
+  /cards/weather/info:
+    get:
+      consumes:
+      - application/json
+      description: Retorna dados adicionais para o município fornecido
+      parameters:
+      - description: Código de município
+        in: query
+        name: city
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/cards.CardsDataItem'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/cards.ErrorResponse'
+      summary: Retorna dados adicionais
+      tags:
+      - cards/weather
+  /cards/weather/ranking:
+    get:
+      consumes:
+      - application/json
+      description: Retorna os dados de ranking em clima para o município e ano fornecidos
+      parameters:
+      - description: Código de município
+        in: query
+        name: city
+        required: true
+        type: string
+      - description: Ano dos dados
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/cards.RankingData'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/cards.ErrorResponse'
+      summary: Retorna dados de ranking de clima
+      tags:
+      - cards/weather
+  /cards/weather/temperature:
+    get:
+      consumes:
+      - application/json
+      description: Retorna os dados de temperatura para o município e ano fornecidos
+      parameters:
+      - description: Código de município
+        in: query
+        name: city
+        required: true
+        type: string
+      - description: Ano dos dados
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/cards.CardsDataItem'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/cards.ErrorResponse'
+      summary: Retorna dados de temperatura
+      tags:
+      - cards/weather
+  /categories:
+    get:
+      consumes:
+      - application/json
+      description: Retorna as categorias e camadas disponíveis para o município
+      parameters:
+      - description: Código do município
+        in: query
+        name: city
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repositories_categories.CategoriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers_categories.ErrorResponse'
+      summary: Retorna categorias disponíveis
+      tags:
+      - categories
+swagger: "2.0"
+
+---
+// urbverde-bff/go.mod
+module urbverde-api
+
+go 1.23
+
+require (
+	github.com/gin-contrib/cors v1.7.2
+	github.com/gin-gonic/gin v1.10.0
+	github.com/joho/godotenv v1.5.1
+	github.com/stretchr/testify v1.10.0
+	github.com/swaggo/files v1.0.1
+	github.com/swaggo/gin-swagger v1.6.0
+	github.com/swaggo/swag v1.16.4
+)
+
+require (
+	github.com/KyleBanks/depth v1.2.1 // indirect
+	github.com/bytedance/sonic v1.12.6 // indirect
+	github.com/bytedance/sonic/loader v0.2.1 // indirect
+	github.com/cloudwego/base64x v0.1.4 // indirect
+	github.com/cloudwego/iasm v0.2.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.7 // indirect
+	github.com/gin-contrib/sse v0.1.0 // indirect
+	github.com/go-openapi/jsonpointer v0.21.0 // indirect
+	github.com/go-openapi/jsonreference v0.21.0 // indirect
+	github.com/go-openapi/spec v0.21.0 // indirect
+	github.com/go-openapi/swag v0.23.0 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/go-playground/validator/v10 v10.23.0 // indirect
+	github.com/goccy/go-json v0.10.4 // indirect
+	github.com/josharian/intern v1.0.0 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
+	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/mailru/easyjson v0.9.0 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
+	github.com/ugorji/go/codec v1.2.12 // indirect
+	golang.org/x/arch v0.12.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/tools v0.28.0 // indirect
+	google.golang.org/protobuf v1.36.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+---
+github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
+github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
+github.com/bytedance/sonic v1.12.6 h1:/isNmCUF2x3Sh8RAp/4mh4ZGkcFAX/hLrzrK3AvpRzk=
+github.com/bytedance/sonic v1.12.6/go.mod h1:B8Gt/XvtZ3Fqj+iSKMypzymZxw/FVwgIGKzMzT9r/rk=
+github.com/bytedance/sonic/loader v0.1.1/go.mod h1:ncP89zfokxS5LZrJxl5z0UJcsk4M4yY2JpfqGeCtNLU=
+github.com/bytedance/sonic/loader v0.2.1 h1:1GgorWTqf12TA8mma4DDSbaQigE2wOgQo7iCjjJv3+E=
+github.com/bytedance/sonic/loader v0.2.1/go.mod h1:ncP89zfokxS5LZrJxl5z0UJcsk4M4yY2JpfqGeCtNLU=
+github.com/cloudwego/base64x v0.1.4 h1:jwCgWpFanWmN8xoIUHa2rtzmkd5J2plF/dnLS6Xd/0Y=
+github.com/cloudwego/base64x v0.1.4/go.mod h1:0zlkT4Wn5C6NdauXdJRhSKRlJvmclQ1hhJgA0rcu/8w=
+github.com/cloudwego/iasm v0.2.0 h1:1KNIy1I1H9hNNFEEH3DVnI4UujN+1zjpuk6gwHLTssg=
+github.com/cloudwego/iasm v0.2.0/go.mod h1:8rXZaNYT2n95jn+zTI1sDr+IgcD2GVs0nlbbQPiEFhY=
+github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/gabriel-vasile/mimetype v1.4.7 h1:SKFKl7kD0RiPdbht0s7hFtjl489WcQ1VyPW8ZzUMYCA=
+github.com/gabriel-vasile/mimetype v1.4.7/go.mod h1:GDlAgAyIRT27BhFl53XNAFtfjzOkLaF35JdEG0P7LtU=
+github.com/gin-contrib/cors v1.7.2 h1:oLDHxdg8W/XDoN/8zamqk/Drgt4oVZDvaV0YmvVICQw=
+github.com/gin-contrib/cors v1.7.2/go.mod h1:SUJVARKgQ40dmrzgXEVxj2m7Ig1v1qIboQkPDTQ9t2E=
+github.com/gin-contrib/gzip v0.0.6 h1:NjcunTcGAj5CO1gn4N8jHOSIeRFHIbn51z6K+xaN4d4=
+github.com/gin-contrib/gzip v0.0.6/go.mod h1:QOJlmV2xmayAjkNS2Y8NQsMneuRShOU/kjovCXNuzzk=
+github.com/gin-contrib/sse v0.1.0 h1:Y/yl/+YNO8GZSjAhjMsSuLt29uWRFHdHYUb5lYOV9qE=
+github.com/gin-contrib/sse v0.1.0/go.mod h1:RHrZQHXnP2xjPF+u1gW/2HnVO7nvIa9PG3Gm+fLHvGI=
+github.com/gin-gonic/gin v1.10.0 h1:nTuyha1TYqgedzytsKYqna+DfLos46nTv2ygFy86HFU=
+github.com/gin-gonic/gin v1.10.0/go.mod h1:4PMNQiOhvDRa013RKVbsiNwoyezlm2rm0uX/T7kzp5Y=
+github.com/go-openapi/jsonpointer v0.21.0 h1:YgdVicSA9vH5RiHs9TZW5oyafXZFc6+2Vc1rr/O9oNQ=
+github.com/go-openapi/jsonpointer v0.21.0/go.mod h1:IUyH9l/+uyhIYQ/PXVA41Rexl+kOkAPDdXEYns6fzUY=
+github.com/go-openapi/jsonreference v0.21.0 h1:Rs+Y7hSXT83Jacb7kFyjn4ijOuVGSvOdF2+tg1TRrwQ=
+github.com/go-openapi/jsonreference v0.21.0/go.mod h1:LmZmgsrTkVg9LG4EaHeY8cBDslNPMo06cago5JNLkm4=
+github.com/go-openapi/spec v0.21.0 h1:LTVzPc3p/RzRnkQqLRndbAzjY0d0BCL72A6j3CdL9ZY=
+github.com/go-openapi/spec v0.21.0/go.mod h1:78u6VdPw81XU44qEWGhtr982gJ5BWg2c0I5XwVMotYk=
+github.com/go-openapi/swag v0.23.0 h1:vsEVJDUo2hPJ2tu0/Xc+4noaxyEffXNIs3cOULZ+GrE=
+github.com/go-openapi/swag v0.23.0/go.mod h1:esZ8ITTYEsH1V2trKHjAN8Ai7xHb8RV+YSZ577vPjgQ=
+github.com/go-playground/assert/v2 v2.2.0 h1:JvknZsQTYeFEAhQwI4qEt9cyV5ONwRHC+lYKSsYSR8s=
+github.com/go-playground/assert/v2 v2.2.0/go.mod h1:VDjEfimB/XKnb+ZQfWdccd7VUvScMdVu0Titje2rxJ4=
+github.com/go-playground/locales v0.14.1 h1:EWaQ/wswjilfKLTECiXz7Rh+3BjFhfDFKv/oXslEjJA=
+github.com/go-playground/locales v0.14.1/go.mod h1:hxrqLVvrK65+Rwrd5Fc6F2O76J/NuW9t0sjnWqG1slY=
+github.com/go-playground/universal-translator v0.18.1 h1:Bcnm0ZwsGyWbCzImXv+pAJnYK9S473LQFuzCbDbfSFY=
+github.com/go-playground/universal-translator v0.18.1/go.mod h1:xekY+UJKNuX9WP91TpwSH2VMlDf28Uj24BCp08ZFTUY=
+github.com/go-playground/validator/v10 v10.23.0 h1:/PwmTwZhS0dPkav3cdK9kV1FsAmrL8sThn8IHr/sO+o=
+github.com/go-playground/validator/v10 v10.23.0/go.mod h1:dbuPbCMFw/DrkbEynArYaCwl3amGuJotoKCe95atGMM=
+github.com/goccy/go-json v0.10.4 h1:JSwxQzIqKfmFX1swYPpUThQZp/Ka4wzJdK0LWVytLPM=
+github.com/goccy/go-json v0.10.4/go.mod h1:oq7eo15ShAhp70Anwd5lgX2pLfOS3QCiwU/PULtXL6M=
+github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
+github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
+github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
+github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
+github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
+github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
+github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
+github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
+github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
+github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
+github.com/klauspost/cpuid/v2 v2.2.9 h1:66ze0taIn2H33fBvCkXuv9BmCwDfafmiIVpKV9kKGuY=
+github.com/klauspost/cpuid/v2 v2.2.9/go.mod h1:rqkxqrZ1EhYM9G+hXH7YdowN5R5RGN6NK4QwQ3WMXF8=
+github.com/knz/go-libedit v1.10.1/go.mod h1:MZTVkCWyz0oBc7JOWP3wNAzd002ZbM/5hgShxwh4x8M=
+github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
+github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
+github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
+github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
+github.com/leodido/go-urn v1.4.0 h1:WT9HwE9SGECu3lg4d/dIA+jxlljEa1/ffXKmRjqdmIQ=
+github.com/leodido/go-urn v1.4.0/go.mod h1:bvxc+MVxLKB4z00jd1z+Dvzr47oO32F/QSNjSBOlFxI=
+github.com/mailru/easyjson v0.9.0 h1:PrnmzHw7262yW8sTBwxi1PdJA3Iw/EKBa8psRf7d9a4=
+github.com/mailru/easyjson v0.9.0/go.mod h1:1+xMtQp2MRNVL/V1bOzuP3aP8VNwRW55fQUto+XFtTU=
+github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
+github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
+github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
+github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd h1:TRLaZ9cD/w8PVh93nsPXa1VrQ6jlwL5oN8l14QlcNfg=
+github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
+github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9Gz0M=
+github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
+github.com/pelletier/go-toml/v2 v2.2.3 h1:YmeHyLY8mFWbdkNWwpr+qIL2bEqT0o95WSdkNHvL12M=
+github.com/pelletier/go-toml/v2 v2.2.3/go.mod h1:MfCQTFTvCcUyyvvwm1+G6H/jORL20Xlb6rzQu9GuUkc=
+github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
+github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/rogpeppe/go-internal v1.11.0 h1:cWPaGQEPrBb5/AsnsZesgZZ9yb1OQ+GOISoDNXVBh4M=
+github.com/rogpeppe/go-internal v1.11.0/go.mod h1:ddIwULY96R17DhadqLgMfk9H9tvdUzkipdSkR5nkCZA=
+github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
+github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpEOglKo=
+github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
+github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
+github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
+github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
+github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
+github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOfJA=
+github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
+github.com/swaggo/files v1.0.1 h1:J1bVJ4XHZNq0I46UU90611i9/YzdrF7x92oX1ig5IdE=
+github.com/swaggo/files v1.0.1/go.mod h1:0qXmMNH6sXNf+73t65aKeB+ApmgxdnkQzVTAj2uaMUg=
+github.com/swaggo/gin-swagger v1.6.0 h1:y8sxvQ3E20/RCyrXeFfg60r6H0Z+SwpTjMYsMm+zy8M=
+github.com/swaggo/gin-swagger v1.6.0/go.mod h1:BG00cCEy294xtVpyIAHG6+e2Qzj/xKlRdOqDkvq0uzo=
+github.com/swaggo/swag v1.16.4 h1:clWJtd9LStiG3VeijiCfOVODP6VpHtKdQy9ELFG3s1A=
+github.com/swaggo/swag v1.16.4/go.mod h1:VBsHJRsDvfYvqoiMKnsdwhNV9LEMHgEDZcyVYX0sxPg=
+github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS4MhqMhdFk5YI=
+github.com/twitchyliquid64/golang-asm v0.15.1/go.mod h1:a1lVb/DtPvCB8fslRZhAngC2+aY1QWCk3Cedj/Gdt08=
+github.com/ugorji/go/codec v1.2.12 h1:9LC83zGrHhuUA9l16C9AHXAqEV/2wBQ4nkvumAE65EE=
+github.com/ugorji/go/codec v1.2.12/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZgYf6w6lg=
+github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
+golang.org/x/arch v0.12.0 h1:UsYJhbzPYGsT0HbEdmYcqtCv8UNGvnaL561NnIUvaKg=
+golang.org/x/arch v0.12.0/go.mod h1:FEVrYAQjsQXMVJ1nsMoVVXPZg6p2JE2mx8psSWTDQys=
+golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
+golang.org/x/crypto v0.31.0 h1:ihbySMvVjLAeSH1IbfcRTkD/iNscyz8rGzjF/E5hV6U=
+golang.org/x/crypto v0.31.0/go.mod h1:kDsLvtWBEx7MV9tJOj9bnXsPbxwJQ6csT/x4KIN4Ssk=
+golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4/go.mod h1:jJ57K6gSWd91VN4djpZkiMVwK6gcyfeH4XE8wZrZaV4=
+golang.org/x/mod v0.22.0 h1:D4nJWe9zXqHOmWqj4VMOJhvzj7bEZg4wEYa759z1pH4=
+golang.org/x/mod v0.22.0/go.mod h1:6SkKJ3Xj0I0BrPOZoBy3bdMptDDU9oJrpohJ3eWZ1fY=
+golang.org/x/net v0.0.0-20190620200207-3b0461eec859/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+golang.org/x/net v0.0.0-20210226172049-e18ecbb05110/go.mod h1:m0MpNAwzfU5UDzcl9v0D8zg8gWTRqZa9RBIspLL5mdg=
+golang.org/x/net v0.0.0-20220722155237-a158d28d115b/go.mod h1:XRhObCWvk6IyKnWLug+ECip1KBveYUHfp+8e9klMJ9c=
+golang.org/x/net v0.7.0/go.mod h1:2Tu9+aMcznHK/AK1HMvgo6xiTLG5rD5rZLDS+rp2Bjs=
+golang.org/x/net v0.33.0 h1:74SYHlV8BIgHIFC/LrYkOGIwL19eTYXQ5wc6TBuO36I=
+golang.org/x/net v0.33.0/go.mod h1:HXLR5J+9DxmrqMwG9qjGCxZ+zKXxBru04zlTvWlWuN4=
+golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+golang.org/x/sync v0.10.0 h1:3NQrjDixjgGwUOCaF8w2+VYHv0Ve/vGYSbdkTa98gmQ=
+golang.org/x/sync v0.10.0/go.mod h1:Czt+wKu1gCyEFDUtn0jG5QVvpJ6rzVqr5aXyt9drQfk=
+golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
+golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.5.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.6.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.28.0 h1:Fksou7UEQUWlKvIdsqzJmUmCX3cZuD2+P3XyyzwMhlA=
+golang.org/x/sys v0.28.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
+golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
+golang.org/x/term v0.0.0-20210927222741-03fcf44c2211/go.mod h1:jbD1KX2456YbFQfuXm/mYQcufACuNUgVhRMnK/tPxf8=
+golang.org/x/term v0.5.0/go.mod h1:jMB1sMXY+tzblOD4FWmEbocvup2/aLOaQEp7JmGp78k=
+golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+golang.org/x/text v0.3.3/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
+golang.org/x/text v0.3.7/go.mod h1:u+2+/6zg+i71rQMx5EYifcz6MCKuco9NR6JIITiCfzQ=
+golang.org/x/text v0.7.0/go.mod h1:mrYo+phRRbMaCq/xk9113O4dZlRixOauAjOtrjsXDZ8=
+golang.org/x/text v0.21.0 h1:zyQAAkrwaneQ066sspRyJaG9VNi/YJ1NfzcGB3hZ/qo=
+golang.org/x/text v0.21.0/go.mod h1:4IBbMaMmOPCJ8SecivzSH54+73PCFmPWxNTLm+vZkEQ=
+golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
+golang.org/x/tools v0.0.0-20191119224855-298f0cb1881e/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
+golang.org/x/tools v0.1.12/go.mod h1:hNGJHUnrk76NpqgfD5Aqm5Crs+Hm0VOH/i9J2+nxYbc=
+golang.org/x/tools v0.28.0 h1:WuB6qZ4RPCQo5aP3WdKZS7i595EdWqWR8vqJTlwTVK8=
+golang.org/x/tools v0.28.0/go.mod h1:dcIOrVd3mfQKTgrDVQHqCPMWy6lnhfhtX3hLXYVLfRw=
+golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+google.golang.org/protobuf v1.36.0 h1:mjIs9gYtt56AzC4ZaffQuh88TZurBGhIJMBZGSxNerQ=
+google.golang.org/protobuf v1.36.0/go.mod h1:9fA7Ob0pmnwhb644+1+CVWFRbNajQ6iRojtC/QF5bRE=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
+gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EVd6muEfDQjcINNoR0C8j2r3qZ4Q=
+gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
+gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+nullprogram.com/x/optparse v1.0.0/go.mod h1:KdyPE+Igbe0jQUrVfMqDMeJQIJZEuyV7pjYmp6pbG50=
+
+---
+// urbverde-bff/main.go
+package main
+
+import (
+	"urbverde-api/routes"
+)
+
+// @title UrbVerde BFF
+// @version 1.0
+// @description API para fornecer sugestões de endereço e outros serviços relacionados
+// @contact.name API Support
+// @contact.url http://www.urbverde.com.br/
+// @contact.email comunica.urbverde@usp.br
+// @license.name ???
+// @license.url ???
+// @host localhost:8080
+// @BasePath /v1
+func main() {
+	r := routes.SetupRouter()
+	r.Run(":8080")
+}
+
+---
+// urbverde-bff/repositories/address/address_data_repository.go
+package repositories_address
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/joho/godotenv"
+)
+
+type AddressDataRepository interface {
+	GetLocationData(identifier string, locationType string) (*Location, error)
+}
+
+type externalAddressDataRepository struct {
+	stateData   LocationResponse
+	countryData LocationResponse
+	cityData    LocationResponse
+}
+
+func NewExternalAddressDataRepository() (AddressDataRepository, error) {
+	_ = godotenv.Load()
+
+	// Load state data
+	stateData, err := loadJSONFile("repositories/address/data/states.json")
+	if err != nil {
+		return nil, fmt.Errorf("error loading state data: %w", err)
+	}
+
+	// Load country data
+	countryData, err := loadJSONFile("repositories/address/data/country.json")
+	if err != nil {
+		return nil, fmt.Errorf("error loading country data: %w", err)
+	}
+
+	// Load city data
+	cityData, err := loadJSONFile("repositories/address/data/cities.json")
+	if err != nil {
+		// Not returning error as city data might not be available yet
+		fmt.Printf("Warning: city data not loaded: %v
+", err)
+	}
+
+	return &externalAddressDataRepository{
+		stateData:   stateData,
+		countryData: countryData,
+		cityData:    cityData,
+	}, nil
+}
+
+func loadJSONFile(filename string) (LocationResponse, error) {
+	var response LocationResponse
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return response, fmt.Errorf("error reading file %s: %w", filename, err)
+	}
+
+	if err := json.Unmarshal(data, &response); err != nil {
+		return response, fmt.Errorf("error unmarshaling %s: %w", filename, err)
+	}
+
+	return response, nil
+}
+
+func guessLocationType(identifier string) string {
+	// Remove any non-numeric characters for code checking
+	numericID := strings.Map(func(r rune) rune {
+		if r >= '0' && r <= '9' {
+			return r
+		}
+		return -1
+	}, identifier)
+
+	switch len(numericID) {
+	case 0:
+		return "country" // Likely a country code like "BR"
+	case 2:
+		return "state" // State codes in Brazil are 2 digits
+	case 7:
+		return "city" // City codes in Brazil are 7 digits
+	default:
+		// If we can't guess from the code length, we'll try to match by display name
+		return ""
+	}
+}
+
+func (r *externalAddressDataRepository) findByDisplayName(displayName string) (*Location, string, error) {
+	// Try cities first as they're most specific
+	for code, city := range r.cityData.Features {
+		if strings.EqualFold(city.DisplayName, displayName) {
+			return &city, code, nil
+		}
+	}
+
+	// Try states
+	for code, state := range r.stateData.Features {
+		if strings.EqualFold(state.DisplayName, displayName) {
+			return &state, code, nil
+		}
+	}
+
+	// Try country
+	for code, country := range r.countryData.Features {
+		if strings.EqualFold(country.DisplayName, displayName) {
+			return &country, code, nil
+		}
+	}
+
+	return nil, "", fmt.Errorf("location not found for display name: %s", displayName)
+}
+
+func (r *externalAddressDataRepository) GetLocationData(identifier string, locationType string) (*Location, error) {
+	// If type wasn't provided, try to guess it
+	if locationType == "" {
+		locationType = guessLocationType(identifier)
+	}
+
+	// If we still don't have a type or if it's empty string,
+	// try to find by display name across all types
+	if locationType == "" {
+		location, _, err := r.findByDisplayName(identifier)
+		if err != nil {
+			return nil, fmt.Errorf("location not found: %w", err)
+		}
+		return location, nil
+	}
+
+	// If we have a type, look in the specific dataset
+	var location *Location
+	var found bool
+
+	switch locationType {
+	case "state":
+		if loc, ok := r.stateData.Features[identifier]; ok {
+			location = &loc
+			found = true
+		}
+	case "country":
+		if loc, ok := r.countryData.Features[identifier]; ok {
+			location = &loc
+			found = true
+		}
+	case "city":
+		if loc, ok := r.cityData.Features[identifier]; ok {
+			location = &loc
+			found = true
+		}
+	default:
+		return nil, fmt.Errorf("invalid location type: %s", locationType)
+	}
+
+	if !found {
+		// If not found by code with the specified type, try display name as fallback
+		location, _, err := r.findByDisplayName(identifier)
+		if err != nil {
+			return nil, fmt.Errorf("location not found for identifier %s and type %s", identifier, locationType)
+		}
+		return location, nil
+	}
+
+	return location, nil
+}
+
+---
+// urbverde-bff/repositories/address/address_repository.go
+package repositories_address
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"os"
+	"sort"
+	"strings"
+
+	"github.com/joho/godotenv"
+)
+
+type AddressRepository interface {
+	SearchAddress(query string) ([]CityResponse, error)
+}
+
+type externalAddressRepository struct {
+	apiURL string
+}
+
+func NewExternalAddressRepository() AddressRepository {
+	_ = godotenv.Load()
+
+	apiURL := os.Getenv("IBGE_API_URL")
+	if apiURL == "" {
+		panic("IBGE_API_URL environment variable not set")
+	}
+
+	return &externalAddressRepository{
+		apiURL: apiURL,
+	}
+}
+
+// improved matching for city names with accents
+var replacer = strings.NewReplacer(
+	"á", "a", "à", "a", "ã", "a", "â", "a",
+	"é", "e", "ê", "e",
+	"í", "i",
+	"ó", "o", "ô", "o", "õ", "o",
+	"ú", "u",
+	"ç", "c",
+)
+
+func normalizeText(s string) string {
+	return replacer.Replace(strings.ToLower(s))
+}
+
+func (r *externalAddressRepository) SearchAddress(query string) ([]CityResponse, error) {
+	url := r.apiURL + "?nome=" + query
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("request failed with status: %d", resp.StatusCode)
+	}
+
+	var cities []IBGEResponse
+	if err := json.NewDecoder(resp.Body).Decode(&cities); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	var cityResponses []CityResponse
+	normalizedQuery := normalizeText(query)
+
+	for _, city := range cities {
+		normalizedCityName := normalizeText(city.Nome)
+		if strings.HasPrefix(normalizedCityName, normalizedQuery) {
+			cityResponses = append(cityResponses, CityResponse{
+				DisplayName: fmt.Sprintf("%s - %s", city.Nome, city.Microrregiao.Mesorregiao.UF.Sigla),
+				CdMun:       city.ID,
+			})
+		}
+	}
+
+	// Sort cityResponses alphabetically by DisplayName
+	sort.Slice(cityResponses, func(i, j int) bool {
+		return cityResponses[i].DisplayName < cityResponses[j].DisplayName
+	})
+
+	return cityResponses, nil
+}
+
+---
+// urbverde-bff/repositories/address/address_repository_test.go
+package repositories_address
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+
+	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestSearchAddress(t *testing.T) {
+	_ = godotenv.Load()
+
+	t.Run("Valid response", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`[
+				{"nome": "São Paulo", "microrregiao": {"mesorregiao": {"UF": {"sigla": "SP"}}}},
+				{"nome": "São Pedro", "microrregiao": {"mesorregiao": {"UF": {"sigla": "SP"}}}}
+			]`))
+		}))
+		defer server.Close()
+
+		os.Setenv("IBGE_API_URL", server.URL)
+
+		repo := NewExternalAddressRepository()
+		results, err := repo.SearchAddress("São")
+
+		assert.NoError(t, err)
+
+		expected := []CityResponse{
+			{DisplayName: "São Paulo - SP", CdMun: 3550308},
+			{DisplayName: "São Pedro - SP", CdMun: 3550407},
+		}
+
+		var actualStrings []string
+		for _, result := range results {
+			actualStrings = append(actualStrings, result.DisplayName)
+		}
+
+		var expectedStrings []string
+		for _, city := range expected {
+			expectedStrings = append(expectedStrings, city.DisplayName)
+		}
+
+		assert.Equal(t, expectedStrings, actualStrings)
+	})
+}
+
+---
+// urbverde-bff/repositories/address/data/cities.json
+{
+  "urbverde_metadata": {
+    "generated_at": "2025-01-29T13:58:55",
+    "generated_by": "Gustavo - UrbVerde",
+    "generated_through": "https://github.com/UrbVerde/urbverde-data/CenterCoordinates.ipynb"
+  },
+  ...
+
+---
+// urbverde-bff/repositories/address/data/country.json
+{
+  "urbverde_metadata": {
+    "generated_at": "2025-01-29T10:58:23",
+    "generated_by": "Gustavo - UrbVerde",
+    "generated_through": "https://github.com/UrbVerde/urbverde-data/CenterCoordinates.ipynb"
+  },
+  ...
+
+---
+// urbverde-bff/repositories/address/data/states.json
+{
+  "urbverde_metadata": {
+    "generated_at": "2025-01-29T11:05:03",
+    "generated_by": "Gustavo - UrbVerde",
+    "generated_through": "https://github.com/UrbVerde/urbverde-data/CenterCoordinates.ipynb"
+  },
+  ...
+
+---
+// urbverde-bff/repositories/address/models.go
+package repositories_address
+
+// CityResponse represents our formatted response for suggestions
+// @Description City suggestion response model
+type CityResponse struct {
+	DisplayName string `json:"display_name" example:"São Paulo - SP"` // What user sees: "City Name - ST"
+	CdMun       int    `json:"cd_mun" example:"3550308"`              // City ID for internal use
+}
+
+// Location represents a detailed location response
+// @Description Detailed location data model
+type Location struct {
+	Name        string                `json:"name" example:"São Paulo"`
+	DisplayName string                `json:"display_name" example:"São Paulo - SP"`
+	Type        string                `json:"type" example:"city"`
+	Code        string                `json:"code" example:"3550308"`
+	State       string                `json:"state,omitempty" example:"SP"`
+	StateName   string                `json:"state_name,omitempty" example:"São Paulo"`
+	Country     string                `json:"country" example:"Brasil"`
+	CountryCode string                `json:"country_code" example:"BR"`
+	CenterOpts  map[string]CenterOpts `json:"center_options"`
+}
+
+// CenterOpts represents location center and zoom options
+type CenterOpts struct {
+	Lat  float64   `json:"lat" example:"-23.5505"`
+	Lng  float64   `json:"lng" example:"-46.6333"`
+	Zoom int       `json:"zoom" example:"10"`
+	BBox []float64 `json:"bbox" example:"-46.8264,-24.0082,-46.3652,-23.3566"`
+}
+
+// LocationResponse represents the JSON structure for location data files
+type LocationResponse struct {
+	Features map[string]Location `json:"features"`
+}
+
+// IBGEResponse represents the raw response from IBGE API
+type IBGEResponse struct {
+	ID           int    `json:"id"`   // City ID (cd_mun)
+	Nome         string `json:"nome"` // City name
+	Microrregiao struct {
+		Mesorregiao struct {
+			UF struct {
+				Sigla string `json:"sigla"` // State abbreviation
+			} `json:"UF"`
+		} `json:"mesorregiao"`
+	} `json:"microrregiao"`
+}
+
+---
+// urbverde-bff/repositories/cards/shared_repository.go
+package cards_shared
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"sort"
+)
+
+const (
+	WfsService      = "WFS"
+	WfsVersion      = "1.0.0"
+	WfsRequest      = "GetFeature"
+	TypeName        = "urbverde:"
+	CqlFilterPrefix = "CQL_FILTER=cd_mun="
+)
+
+type RepositoryBase interface {
+	LoadYears(city string) ([]int, error)
+}
+
+// Dynamic properties
+type Properties interface{}
+
+type FeatureCollection struct {
+	Features []Feature `json:"features"`
+}
+
+type Feature struct {
+	Properties Properties `json:"properties"`
+}
+
+func FetchFromURL(url string) (*FeatureCollection, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao fazer a requisição: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("erro na requisição. Código de status: %d", resp.StatusCode)
+	}
+
+	var data FeatureCollection
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return nil, fmt.Errorf("erro ao decodificar a resposta: %w", err)
+	}
+
+	return &data, nil
+}
+
+func MapToStruct(m map[string]interface{}, v interface{}) error {
+	data, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, v)
+}
+
+func LoadYears(url string, processProperties func(map[string]interface{}) (int, error)) ([]int, error) {
+	data, err := FetchFromURL(url)
+	if err != nil {
+		return nil, err
+	}
+
+	yearsMap := make(map[int]bool)
+
+	for _, feature := range data.Features {
+		props, ok := feature.Properties.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("unexpected property type")
+		}
+
+		year, err := processProperties(props)
+		if err != nil {
+			return nil, err
+		}
+		yearsMap[year] = true
+	}
+
+	var years []int
+	for year := range yearsMap {
+		years = append(years, year)
+	}
+
+	sort.Sort(sort.Reverse(sort.IntSlice(years)))
+
+	return years, nil
+}
+
+---
+// urbverde-bff/repositories/cards/weather/weather_heat_repository.go
+package repositories_cards_weather
+
+import (
+	"fmt"
+	"math"
+	"os"
+	"strconv"
+	cards_shared "urbverde-api/repositories/cards"
+
+	"github.com/joho/godotenv"
+)
+
+type WeatherHeatRepository interface {
+	cards_shared.RepositoryBase
+	LoadHeatData(city string, year string) ([]HeatDataItem, error)
+}
+
+type HeatProperties struct {
+	Ano  int     `json:"ano"`
+	H12b float64 `json:"h12b"` // Negros e indígenas
+	H11b float64 `json:"h11b"` // Mulheres
+	H10b float64 `json:"h10b"` // Crianças
+	H9b  float64 `json:"h9b"`  // Idosos
+}
+
+// Response JSON structure
+type HeatDataItem struct {
+	Title    string  `json:"title"`
+	Subtitle *string `json:"subtitle,omitempty"` // Omitir caso seja nil
+	Value    string  `json:"value"`
+}
+
+type externalWeatherHeatRepository struct {
+	geoserverURL string
+}
+
+func NewExternalWeatherHeatRepository() WeatherHeatRepository {
+	_ = godotenv.Load()
+
+	geoserverURL := os.Getenv("GEOSERVER_URL")
+	if geoserverURL == "" {
+		panic("A variável de ambiente GEOSERVER_URL não está definida")
+	}
+
+	geoserverURL = fmt.Sprintf("%sows?service=%s&version=%s&request=%s&typeName=%s&%s",
+		geoserverURL,
+		cards_shared.WfsService,
+		cards_shared.WfsVersion,
+		cards_shared.WfsRequest,
+		cards_shared.TypeName+"dados_temperatura_por_municipio",
+		cards_shared.CqlFilterPrefix,
+	)
+
+	return &externalWeatherHeatRepository{
+		geoserverURL: geoserverURL,
+	}
+}
+
+func (r *externalWeatherHeatRepository) LoadYears(city string) ([]int, error) {
+	url := r.geoserverURL + city + "&outputFormat=application/json"
+
+	processProperties := func(props map[string]interface{}) (int, error) {
+		year, ok := props["ano"].(float64)
+		if !ok {
+			return 0, fmt.Errorf("year not found or invalid type")
+		}
+		return int(year), nil
+	}
+
+	return cards_shared.LoadYears(url, processProperties)
+}
+
+var subtitle string = "Porcentagem vivendo nas regiões mais quentes"
+
+func (r *externalWeatherHeatRepository) LoadHeatData(city string, year string) ([]HeatDataItem, error) {
+	url := r.geoserverURL + city + "&outputFormat=application/json"
+
+	data, err := cards_shared.FetchFromURL(url)
+	if err != nil {
+		return nil, err
+	}
+
+	convYear, err := strconv.Atoi(year)
+	if err != nil {
+		return nil, fmt.Errorf("ano inválido: %w", err)
+	}
+
+	var filtered cards_shared.Feature
+	found := false
+	for _, feature := range data.Features {
+		props, ok := feature.Properties.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("tipo inesperado de propriedades")
+		}
+
+		var heatProps HeatProperties
+		if err := cards_shared.MapToStruct(props, &heatProps); err != nil {
+			return nil, err
+		}
+
+		if heatProps.Ano == convYear {
+			filtered = feature
+			filtered.Properties = heatProps
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return nil, fmt.Errorf("ano %d não encontrado nos dados", convYear)
+	}
+
+	heatProps := filtered.Properties.(HeatProperties)
+
+	// Values
+	black_indigenous_percentage := int(math.Round(heatProps.H12b * 100))
+	women_percentage := int(math.Round(heatProps.H11b * 100))
+	children_percentage := int(math.Round(heatProps.H10b * 100))
+	senior_percentage := int(math.Round(heatProps.H9b * 100))
+
+	result := []HeatDataItem{
+		{"Negros e indígenas afetados", &subtitle, strconv.Itoa(black_indigenous_percentage) + "%"},
+		{"Mulheres afetadas", &subtitle, strconv.Itoa(women_percentage) + "%"},
+		{"Crianças afetadas", &subtitle, strconv.Itoa(children_percentage) + "%"},
+		{"Idosos afetados", &subtitle, strconv.Itoa(senior_percentage) + "%"},
+	}
+
+	return result, nil
+}
+
+---
+// urbverde-bff/repositories/cards/weather/weather_heat_repository_test.go
+package repositories_cards_weather
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+	"urbverde-api/utils"
+
+	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestLoadHeatData(t *testing.T) {
+	_ = godotenv.Load()
+
+	t.Run("Valid response", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{
+				"features": [
+					{
+						"properties": {
+							"ano": 2020,
+							"h12b": 0.25,
+							"h11b": 0.39,
+							"h10b": 0.15,
+							"h9b": 0.12
+						}
+					}
+				]
+			}`))
+		}))
+		defer server.Close()
+
+		os.Setenv("GEOSERVER_URL", server.URL+"/")
+
+		repo := NewExternalWeatherHeatRepository()
+
+		results, err := repo.LoadHeatData("3548906", "2020")
+
+		assert.NoError(t, err)
+
+		expected := []HeatDataItem{
+			{"Negros e indígenas afetados", utils.StringPtr("Porcentagem vivendo nas regiões mais quentes"), "25%"},
+			{"Mulheres afetadas", utils.StringPtr("Porcentagem vivendo nas regiões mais quentes"), "39%"},
+			{"Crianças afetadas", utils.StringPtr("Porcentagem vivendo nas regiões mais quentes"), "15%"},
+			{"Idosos afetados", utils.StringPtr("Porcentagem vivendo nas regiões mais quentes"), "12%"},
+		}
+
+		assert.Equal(t, expected, results)
+	})
+}
+
+---
+// urbverde-bff/repositories/cards/weather/weather_info_repository.go
+package repositories_cards_weather
+
+import (
+	"fmt"
+	"os"
+	"sort"
+	"strconv"
+	cards_shared "urbverde-api/repositories/cards"
+
+	"github.com/joho/godotenv"
+)
+
+type WeatherInfoRepository interface {
+	LoadInfoData(city string) ([]InfoDataItem, error)
+}
+
+type InfoProperties struct {
+	Ano int     `json:"ano"`
+	B1  float64 `json:"b1"` // % cobertura vegetal (vegetal)
+	A1  float64 `json:"a1"` // Moradores prox a praças (square)
+	B3  float64 `json:"b3"` // Desigualdade ambiental e social (vegetal)
+}
+
+type InfoDataItem struct {
+	Title string `json:"title"`
+	Value string `json:"value"`
+}
+
+type externalWeatherInfoRepository struct {
+	vegetalURL string
+	squareURL  string
+}
+
+func NewExternalWeatherInfoRepository() WeatherInfoRepository {
+	_ = godotenv.Load()
+
+	geoserverURL := os.Getenv("GEOSERVER_URL")
+	if geoserverURL == "" {
+		panic("A variável de ambiente GEOSERVER_URL não está definida")
+	}
+
+	vegetalURL := fmt.Sprintf("%sows?service=%s&version=%s&request=%s&typeName=%s&%s",
+		geoserverURL,
+		cards_shared.WfsService,
+		cards_shared.WfsVersion,
+		cards_shared.WfsRequest,
+		cards_shared.TypeName+"vegetacao_highlights_data",
+		cards_shared.CqlFilterPrefix,
+	)
+
+	squareURL := fmt.Sprintf("%sows?service=%s&version=%s&request=%s&typeName=%s&%s",
+		geoserverURL,
+		cards_shared.WfsService,
+		cards_shared.WfsVersion,
+		cards_shared.WfsRequest,
+		cards_shared.TypeName+"dados_pracas_por_municipio",
+		cards_shared.CqlFilterPrefix,
+	)
+
+	return &externalWeatherInfoRepository{
+		vegetalURL: vegetalURL,
+		squareURL:  squareURL,
+	}
+}
+
+func (r *externalWeatherInfoRepository) loadGeneralData(city string) (*cards_shared.FeatureCollection, error) {
+	squareUrl := r.squareURL + city + "&outputFormat=application/json"
+	squareData, err := cards_shared.FetchFromURL(squareUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	vegetalUrl := r.vegetalURL + city + "&outputFormat=application/json"
+	vegetalData, err := cards_shared.FetchFromURL(vegetalUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	Tdata := append(squareData.Features, vegetalData.Features...)
+	data := &cards_shared.FeatureCollection{
+		Features: Tdata,
+	}
+
+	return data, nil
+}
+
+func sortGeneralData(data *cards_shared.FeatureCollection) *cards_shared.FeatureCollection {
+	sort.Slice(data.Features, func(i, j int) bool {
+		propsI := data.Features[i].Properties.(map[string]interface{})
+		propsJ := data.Features[j].Properties.(map[string]interface{})
+
+		anoI, okI := propsI["ano"].(float64)
+		anoJ, okJ := propsJ["ano"].(float64)
+		if !okI || !okJ {
+			panic("campo 'ano' não é do tipo float64")
+		}
+
+		return int(anoI) > int(anoJ)
+	})
+
+	return data
+}
+
+func (r *externalWeatherInfoRepository) LoadInfoData(city string) ([]InfoDataItem, error) {
+	data, err := r.loadGeneralData(city)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao carregar dados: %w", err)
+	}
+
+	data = sortGeneralData(data)
+
+	// busca o valor mais recente != 0
+	findLatestNonZero := func(features []cards_shared.Feature, key string) (float64, bool) {
+		for _, feature := range features {
+			props, ok := feature.Properties.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			value, ok := props[key].(float64)
+			if ok && value != 0 {
+				return value, true
+			}
+		}
+		return 0, false
+	}
+
+	latestB1, foundB1 := findLatestNonZero(data.Features, "b1")
+	latestA1, foundA1 := findLatestNonZero(data.Features, "a1")
+	latestB3, foundB3 := findLatestNonZero(data.Features, "b3")
+
+	if !foundB1 && !foundA1 && !foundB3 {
+		return nil, fmt.Errorf("nenhum dado válido encontrado")
+	}
+
+	result := []InfoDataItem{
+		{"Média da cobertura vegetal", strconv.Itoa(int(latestB1*100)) + "%"},
+		{"Moradores próximos a praças", strconv.Itoa(int(latestA1)) + "%"},
+		{"Desigualdade ambiental e social", strconv.Itoa(int(latestB3 * 100))},
+	}
+
+	return result, nil
+}
+
+---
+// urbverde-bff/repositories/cards/weather/weather_ranking_repository.go
+package repositories_cards_weather
+
+import (
+	"fmt"
+	"os"
+	"strconv"
+	cards_shared "urbverde-api/repositories/cards"
+
+	"github.com/joho/godotenv"
+)
+
+type WeatherRankingRepository interface {
+	cards_shared.RepositoryBase
+	LoadRankingData(city string, year string) ([]RankingData, error)
+}
+
+// RankingProperties represents the properties used for ranking
+type RankingProperties struct {
+	Ano          int    `json:"ano"`
+	NMMicro      string `json:"nm_micro"`     // Microregion name
+	NRankMicro   int    `json:"n_rank_micro"` // Microregion total
+	C1RankMicro  int    `json:"c1_rank_micro"`
+	C2RankMicro  int    `json:"c2_rank_micro"`
+	C3RankMicro  int    `json:"c3_rank_micro"`
+	NMMeso       string `json:"nm_meso"`     // Mesoregion name
+	NRankMeso    int    `json:"n_rank_meso"` // Mesoregion total
+	C1RankMeso   int    `json:"c1_rank_meso"`
+	C2RankMeso   int    `json:"c2_rank_meso"`
+	C3RankMeso   int    `json:"c3_rank_meso"`
+	NMEstado     string `json:"nm_estado"`     // State name
+	NRankEstado  int    `json:"n_rank_estado"` // State total
+	C1RankEstado int    `json:"c1_rank_estado"`
+	C2RankEstado int    `json:"c2_rank_estado"`
+	C3RankEstado int    `json:"c3_rank_estado"`
+}
+
+type RankingDataItem struct {
+	Type   string `json:"type"`
+	Number int    `json:"number"`
+	Of     int    `json:"of"`
+}
+
+// Response JSON structure
+type RankingData struct {
+	Title    string            `json:"title"`
+	Subtitle string            `json:"subtitle"`
+	Items    []RankingDataItem `json:"items"`
+}
+
+type externalWeatherRankingRepository struct {
+	geoserverURL string
+}
+
+func NewExternalWeatherRankingRepository() WeatherRankingRepository {
+	_ = godotenv.Load()
+
+	geoserverURL := os.Getenv("GEOSERVER_URL")
+	if geoserverURL == "" {
+		panic("A variável de ambiente GEOSERVER_URL não está definida")
+	}
+
+	geoserverURL = fmt.Sprintf("%sows?service=%s&version=%s&request=%s&typeName=%s&%s",
+		geoserverURL,
+		cards_shared.WfsService,
+		cards_shared.WfsVersion,
+		cards_shared.WfsRequest,
+		cards_shared.TypeName+"dados_temperatura_por_municipio",
+		cards_shared.CqlFilterPrefix,
+	)
+
+	return &externalWeatherRankingRepository{
+		geoserverURL: geoserverURL,
+	}
+}
+
+func (r *externalWeatherRankingRepository) LoadYears(city string) ([]int, error) {
+	url := r.geoserverURL + city + "&outputFormat=application/json"
+
+	processProperties := func(props map[string]interface{}) (int, error) {
+		year, ok := props["ano"].(float64)
+		if !ok {
+			return 0, fmt.Errorf("year not found or invalid type")
+		}
+		return int(year), nil
+	}
+
+	return cards_shared.LoadYears(url, processProperties)
+}
+
+func (r *externalWeatherRankingRepository) LoadRankingData(city string, year string) ([]RankingData, error) {
+	url := r.geoserverURL + city + "&outputFormat=application/json"
+
+	data, err := cards_shared.FetchFromURL(url)
+	if err != nil {
+		return nil, err
+	}
+
+	convYear, err := strconv.Atoi(year)
+	if err != nil {
+		return nil, fmt.Errorf("ano inválido: %w", err)
+	}
+
+	var filtered cards_shared.Feature
+	found := false
+	for _, feature := range data.Features {
+		props, ok := feature.Properties.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("tipo inesperado de propriedades")
+		}
+
+		// Map values
+		var rankingProps RankingProperties
+		rankingProps.Ano = int(props["ano"].(float64))
+
+		// Micro
+		rankingProps.NMMicro = props["nm_micro"].(string)
+		rankingProps.NRankMicro = int(props["n_rank_micro"].(float64))
+		rankingProps.C1RankMicro = int(props["c1_rank_micro"].(float64))
+		rankingProps.C2RankMicro = int(props["c2_rank_micro"].(float64))
+		rankingProps.C3RankMicro = int(props["c3_rank_micro"].(float64))
+
+		// Meso
+		rankingProps.NMMeso = props["nm_meso"].(string)
+		rankingProps.NRankMeso = int(props["n_rank_meso"].(float64))
+		rankingProps.C1RankMeso = int(props["c1_rank_meso"].(float64))
+		rankingProps.C2RankMeso = int(props["c2_rank_meso"].(float64))
+		rankingProps.C3RankMeso = int(props["c3_rank_meso"].(float64))
+
+		// Estado
+		rankingProps.NMEstado = "São Paulo" // definindo manualmente (temporario)
+		rankingProps.NRankEstado = 645
+		rankingProps.C1RankEstado = int(props["c1_rank_estado"].(float64))
+		rankingProps.C2RankEstado = int(props["c2_rank_estado"].(float64))
+		rankingProps.C3RankEstado = int(props["c3_rank_estado"].(float64))
+
+		if rankingProps.Ano == convYear {
+			filtered = feature
+			filtered.Properties = rankingProps
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return nil, fmt.Errorf("ano %d não encontrado nos dados", convYear)
+	}
+
+	rankingProps := filtered.Properties.(RankingProperties)
+
+	result := []RankingData{
+		{
+			Title:    "Municipios do Estado",
+			Subtitle: fmt.Sprintf("Posição do seu município entre os %d do Estado de %s", rankingProps.NRankEstado, rankingProps.NMEstado),
+			Items: []RankingDataItem{
+				{Type: "Nível de ilha de calor", Number: rankingProps.C1RankEstado, Of: rankingProps.NRankEstado},
+				{Type: "Temperatura média da superfície", Number: rankingProps.C2RankEstado, Of: rankingProps.NRankEstado},
+				{Type: "Temperatura máxima da superfície", Number: rankingProps.C3RankEstado, Of: rankingProps.NRankEstado},
+			},
+		},
+		{
+			Title:    "Municipios da Mesorregião",
+			Subtitle: fmt.Sprintf("Posição do seu município entre os %d da mesorregião de %s", rankingProps.NRankMeso, rankingProps.NMMeso),
+			Items: []RankingDataItem{
+				{Type: "Nível de ilha de calor", Number: rankingProps.C1RankMeso, Of: rankingProps.NRankMeso},
+				{Type: "Temperatura média da superfície", Number: rankingProps.C2RankMeso, Of: rankingProps.NRankMeso},
+				{Type: "Temperatura máxima da superfície", Number: rankingProps.C3RankMeso, Of: rankingProps.NRankMeso},
+			},
+		},
+		{
+			Title:    "Municipios da Microrregião",
+			Subtitle: fmt.Sprintf("Posição do seu município entre os %d da microrregião de %s", rankingProps.NRankMicro, rankingProps.NMMicro),
+			Items: []RankingDataItem{
+				{Type: "Nível de ilha de calor", Number: rankingProps.C1RankMicro, Of: rankingProps.NRankMicro},
+				{Type: "Temperatura média da superfície", Number: rankingProps.C2RankMicro, Of: rankingProps.NRankMicro},
+				{Type: "Temperatura máxima da superfície", Number: rankingProps.C3RankMicro, Of: rankingProps.NRankMicro},
+			},
+		},
+	}
+
+	return result, nil
+}
+
+---
+// urbverde-bff/repositories/cards/weather/weather_ranking_repository_test.go
+package repositories_cards_weather
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+
+	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestLoadRankingData(t *testing.T) {
+	_ = godotenv.Load()
+
+	t.Run("Valid response", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{
+				"features": [
+					{
+						"properties": {
+							"ano": 2020,
+							"nm_micro": "São Carlos",
+							"n_rank_micro": 6,
+							"c1_rank_micro": 6,
+							"c2_rank_micro": 3,
+							"c3_rank_micro": 3,
+							"nm_meso": "Araraquara",
+							"n_rank_meso": 21,
+							"c1_rank_meso": 21,
+							"c2_rank_meso": 7,
+							"c3_rank_meso": 16,
+							"n_rank_estado": 645,
+							"c1_rank_estado": 612,
+							"c2_rank_estado": 406,
+							"c3_rank_estado": 546
+						}
+					}
+				]
+			}`))
+		}))
+		defer server.Close()
+
+		os.Setenv("GEOSERVER_URL", server.URL+"/")
+
+		repo := NewExternalWeatherRankingRepository()
+
+		results, err := repo.LoadRankingData("3548906", "2020")
+
+		assert.NoError(t, err)
+		expected := []RankingData{
+			{
+				Title:    "Municipios do Estado",
+				Subtitle: "Posição do seu município entre os 645 do Estado de São Paulo",
+				Items: []RankingDataItem{
+					{Type: "Nível de ilha de calor", Number: 612, Of: 645},
+					{Type: "Temperatura média da superfície", Number: 406, Of: 645},
+					{Type: "Temperatura máxima da superfície", Number: 546, Of: 645},
+				},
+			},
+			{
+				Title:    "Municipios da Mesorregião",
+				Subtitle: "Posição do seu município entre os 21 da mesorregião de Araraquara",
+				Items: []RankingDataItem{
+					{Type: "Nível de ilha de calor", Number: 21, Of: 21},
+					{Type: "Temperatura média da superfície", Number: 7, Of: 21},
+					{Type: "Temperatura máxima da superfície", Number: 16, Of: 21},
+				},
+			},
+			{
+				Title:    "Municipios da Microrregião",
+				Subtitle: "Posição do seu município entre os 6 da microrregião de São Carlos",
+				Items: []RankingDataItem{
+					{Type: "Nível de ilha de calor", Number: 6, Of: 6},
+					{Type: "Temperatura média da superfície", Number: 3, Of: 6},
+					{Type: "Temperatura máxima da superfície", Number: 3, Of: 6},
+				},
+			},
+		}
+
+		assert.Equal(t, expected, results)
+	})
+}
+
+---
+// urbverde-bff/repositories/cards/weather/weather_temperature_repository.go
+package repositories_cards_weather
+
+import (
+	"fmt"
+	"math"
+	"os"
+	"strconv"
+	cards_shared "urbverde-api/repositories/cards"
+
+	"github.com/joho/godotenv"
+)
+
+type WeatherTemperatureRepository interface {
+	cards_shared.RepositoryBase
+	LoadTemperatureData(city string, year string) ([]TemperatureDataItem, error)
+}
+
+type TemperatureProperties struct {
+	Ano int     `json:"ano"`
+	C1  float64 `json:"c1"`  // Nível de Ilha de Calor
+	H5b int     `json:"h5b"` // Amplitude
+	C2  float64 `json:"c2"`  // Temperatura Média
+	C3  float64 `json:"c3"`  // Temperatura Máxima
+}
+
+// Response JSON structure
+type TemperatureDataItem struct {
+	Title    string  `json:"title"`
+	Subtitle *string `json:"subtitle,omitempty"` // Omitir caso seja nil
+	Value    string  `json:"value"`
+}
+
+type externalWeatherTemperatureRepository struct {
+	geoserverURL string
+}
+
+func NewExternalWeatherTemperatureRepository() WeatherTemperatureRepository {
+	_ = godotenv.Load()
+
+	geoserverURL := os.Getenv("GEOSERVER_URL")
+	if geoserverURL == "" {
+		panic("A variável de ambiente GEOSERVER_URL não está definida")
+	}
+
+	geoserverURL = fmt.Sprintf("%sows?service=%s&version=%s&request=%s&typeName=%s&%s",
+		geoserverURL,
+		cards_shared.WfsService,
+		cards_shared.WfsVersion,
+		cards_shared.WfsRequest,
+		cards_shared.TypeName+"dados_temperatura_por_municipio",
+		cards_shared.CqlFilterPrefix,
+	)
+
+	return &externalWeatherTemperatureRepository{
+		geoserverURL: geoserverURL,
+	}
+}
+
+func (r *externalWeatherTemperatureRepository) LoadYears(city string) ([]int, error) {
+	url := r.geoserverURL + city + "&outputFormat=application/json"
+
+	processProperties := func(props map[string]interface{}) (int, error) {
+		year, ok := props["ano"].(float64)
+		if !ok {
+			return 0, fmt.Errorf("year not found or invalid type")
+		}
+		return int(year), nil
+	}
+
+	return cards_shared.LoadYears(url, processProperties)
+}
+
+func auxLoadSubtitles(value int, avg int, subtitle *string) {
+	if subtitle == nil {
+		return
+	}
+
+	if value < avg {
+		*subtitle = "Abaixo" + *subtitle + strconv.Itoa(avg)
+	} else if value > avg {
+		*subtitle = "Acima" + *subtitle + strconv.Itoa(avg)
+	} else {
+		*subtitle = "Está na média nacional de " + strconv.Itoa(avg)
+	}
+}
+
+func tempLoadData(v1 int, v2 int, sub1 *string, sub2 *string) {
+	auxLoadSubtitles(v1, 0, sub1)
+	auxLoadSubtitles(v2, 0, sub2)
+}
+
+func (r *externalWeatherTemperatureRepository) LoadTemperatureData(city string, year string) ([]TemperatureDataItem, error) {
+	url := r.geoserverURL + city + "&outputFormat=application/json"
+
+	data, err := cards_shared.FetchFromURL(url)
+	if err != nil {
+		return nil, err
+	}
+
+	convYear, err := strconv.Atoi(year)
+	if err != nil {
+		return nil, fmt.Errorf("ano inválido: %w", err)
+	}
+
+	var filtered cards_shared.Feature
+	found := false
+	for _, feature := range data.Features {
+		props, ok := feature.Properties.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("tipo inesperado de propriedades")
+		}
+
+		var temperatureProps TemperatureProperties
+		if err := cards_shared.MapToStruct(props, &temperatureProps); err != nil {
+			return nil, err
+		}
+
+		if temperatureProps.Ano == convYear {
+			filtered = feature
+			filtered.Properties = temperatureProps
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return nil, fmt.Errorf("ano %d não encontrado nos dados", convYear)
+	}
+
+	temperatureProps := filtered.Properties.(TemperatureProperties)
+
+	// Values
+	heat_island_value := int(math.Round(temperatureProps.C1))
+	avg_temp_value := int(math.Round(temperatureProps.C2))
+	amplitude_value := temperatureProps.H5b
+	max_temp_value := int(math.Round(temperatureProps.C3))
+
+	// Result
+	// Nível de ilha de calor
+	// Temperatura média da superfície
+	// Maior amplitude
+	// Temperatura máxima da superfície
+
+	var heat_island_subtitle string = " da média nacional de "
+	var avg_temp_subtitle string = " da média nacional de "
+	var amplitude_subtitle string = "É a diferença entre a temperatura mais quente e a mais fria"
+
+	tempLoadData(heat_island_value, avg_temp_value, &heat_island_subtitle, &avg_temp_subtitle)
+
+	result := []TemperatureDataItem{
+		{"Nível de ilha de calor", &heat_island_subtitle, strconv.Itoa(heat_island_value)},
+		{"Temperatura média da superfície", &avg_temp_subtitle, strconv.Itoa(avg_temp_value) + "°C"},
+		{"Maior amplitude", &amplitude_subtitle, strconv.Itoa(amplitude_value) + "°C"},
+		{"Temperatura máxima da superfície", nil, strconv.Itoa(max_temp_value) + "°C"},
+	}
+
+	return result, nil
+}
+
+---
+// urbverde-bff/repositories/cards/weather/weather_temperature_repository_test.go
+package repositories_cards_weather
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+	"urbverde-api/utils"
+
+	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestLoadTemperatureData(t *testing.T) {
+	_ = godotenv.Load()
+
+	t.Run("Valid response", func(t *testing.T) {
+		// Mock server to simulate the Geoserver response
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{
+				"features": [
+					{
+						"properties": {
+							"ano": 2020,
+							"c1": 2.0,
+							"h5b": 9,
+							"c2": 32.0,
+							"c3": 42.0
+						}
+					}
+				]
+			}`))
+		}))
+		defer server.Close()
+
+		os.Setenv("GEOSERVER_URL", server.URL+"/")
+
+		repo := NewExternalWeatherTemperatureRepository()
+
+		results, err := repo.LoadTemperatureData("3548906", "2020")
+
+		assert.NoError(t, err)
+
+		expected := []TemperatureDataItem{
+			{"Nível de ilha de calor", utils.StringPtr("Acima da média nacional de 0"), "2"},
+			{"Temperatura média da superfície", utils.StringPtr("Acima da média nacional de 0"), "32°C"},
+			{"Maior amplitude", utils.StringPtr("É a diferença entre a temperatura mais quente e a mais fria"), "9°C"},
+			{"Temperatura máxima da superfície", nil, "42°C"},
+		}
+
+		assert.Equal(t, expected, results)
+	})
+}
+
+---
+// urbverde-bff/repositories/categories/categories_repository.go
+package repositories_categories
+
+import (
+	"embed"
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
+)
+
+//go:embed data/*.json
+var dataFiles embed.FS
+
+type Layer struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	IsActive bool   `json:"isActive"`
+	IsNew    bool   `json:"isNew"`
+}
+
+type Category struct {
+	ID     string  `json:"id"`
+	Name   string  `json:"name"`
+	Icon   string  `json:"icon"`
+	Layers []Layer `json:"layers"`
+}
+
+type CategoriesResponse struct {
+	Categories []Category `json:"categories"`
+}
+
+type ExclusiveLayer struct {
+	ID              string   `json:"id"`
+	Name            string   `json:"name"`
+	IsActive        bool     `json:"isActive"`
+	IsNew           bool     `json:"isNew"`
+	AddToCategories []string `json:"addToCategories"`
+}
+
+type CityExclusiveLayers struct {
+	Name   string           `json:"name"`
+	Layers []ExclusiveLayer `json:"layers"`
+}
+
+type ExclusiveLayersMap map[int]CityExclusiveLayers
+
+type CategoriesRepository interface {
+	GetCategories(cityCode string) (*CategoriesResponse, error)
+}
+
+type categoriesRepository struct {
+	baseCategories  CategoriesResponse
+	exclusiveLayers ExclusiveLayersMap
+}
+
+func loadJSONFile(filename string, target interface{}) error {
+	data, err := dataFiles.ReadFile(filename)
+	if err != nil {
+		return fmt.Errorf("error reading file %s: %w", filename, err)
+	}
+
+	if err := json.Unmarshal(data, target); err != nil {
+		return fmt.Errorf("error unmarshaling %s: %w", filename, err)
+	}
+
+	return nil
+}
+
+func NewCategoriesRepository() (CategoriesRepository, error) {
+	var baseCategories CategoriesResponse
+	if err := loadJSONFile("data/base_categories.json", &baseCategories); err != nil {
+		return nil, err
+	}
+
+	var exclusiveLayers ExclusiveLayersMap
+	if err := loadJSONFile("data/exclusive_layers.json", &exclusiveLayers); err != nil {
+		return nil, err
+	}
+
+	return &categoriesRepository{
+		baseCategories:  baseCategories,
+		exclusiveLayers: exclusiveLayers,
+	}, nil
+}
+
+func (r *categoriesRepository) addExclusiveLayers(response *CategoriesResponse, cityCode string) {
+	cityCodeInt, err := strconv.Atoi(cityCode)
+	if err != nil {
+		return
+	}
+
+	cityLayers, exists := r.exclusiveLayers[cityCodeInt]
+	if !exists {
+		return
+	}
+
+	// For each exclusive layer defined for this city
+	for _, exclusiveLayer := range cityLayers.Layers {
+		layer := Layer{
+			ID:       exclusiveLayer.ID,
+			Name:     exclusiveLayer.Name,
+			IsActive: exclusiveLayer.IsActive,
+			IsNew:    exclusiveLayer.IsNew,
+		}
+
+		// Add the layer to all specified categories
+		for i := range response.Categories {
+			for _, categoryID := range exclusiveLayer.AddToCategories {
+				if response.Categories[i].ID == categoryID {
+					// Insert at beginning of layers slice
+					newLayers := make([]Layer, len(response.Categories[i].Layers)+1)
+					newLayers[0] = layer
+					copy(newLayers[1:], response.Categories[i].Layers)
+					response.Categories[i].Layers = newLayers
+				}
+			}
+		}
+	}
+}
+
+func (r *categoriesRepository) GetCategories(cityCode string) (*CategoriesResponse, error) {
+	// Deep clone the base categories
+	categoriesBytes, err := json.Marshal(r.baseCategories)
+	if err != nil {
+		return nil, fmt.Errorf("error cloning categories: %w", err)
+	}
+
+	var response CategoriesResponse
+	if err := json.Unmarshal(categoriesBytes, &response); err != nil {
+		return nil, fmt.Errorf("error unmarshaling categories clone: %w", err)
+	}
+
+	// Check if it's a São Paulo state city (starts with 35)
+	isSaoPauloState := strings.HasPrefix(cityCode, "35")
+	if !isSaoPauloState {
+		// Filter categories for non-São Paulo cities
+		var filteredCategories []Category
+		for _, category := range response.Categories {
+			if category.ID == "parks" || category.ID == "census" || category.ID == "transport" {
+				filteredCategories = append(filteredCategories, category)
+			}
+		}
+		response.Categories = filteredCategories
+		return &response, nil
+	}
+
+	// Add any exclusive layers for this city
+	r.addExclusiveLayers(&response, cityCode)
+
+	return &response, nil
+}
+
+---
+// urbverde-bff/repositories/categories/data/base_categories.json
+{
+    "categories": [
+      {
+        "id": "climate",
+        "name": "Clima",
+        "icon": "Snowy Sunny Day.svg",
+        "layers": [
+          {"id": "surface_temp", "name": "Temperatura de superfície", "isPartner": false, "isNew": true},
+  ...
+
+---
+// urbverde-bff/repositories/categories/data/exclusive_layers.json
+{
+  "3534708": {
+    "name": "Ourinhos-SP",
+    "layers": [{"id": "tree_inventory", "name": "Inventário de Árvores", "isPartner": true, "isNew": true, "addToCategories": ["vegetation", "parks"]}]
+  },
+  ...
+
+---
+// urbverde-bff/routes/address/address_routes.go
+package address
+
+import (
+	controllers_address "urbverde-api/controllers/address"
+	repositories_address "urbverde-api/repositories/address"
+	services_address "urbverde-api/services/address"
+
+	"github.com/gin-gonic/gin"
+)
+
+type ErrorResponse struct {
+	Message string `json:"message" example:"Erro ao processar a solicitação"`
+	Error   string `json:"error" example:"MISSING_PARAMETERS"`
+}
+
+func SetupAddressRoutes(rg *gin.RouterGroup) {
+	// Setup suggestions endpoint
+	addressRepo := repositories_address.NewExternalAddressRepository()
+	addressService := services_address.NewAddressService(addressRepo)
+	addressController := controllers_address.NewAddressController(addressService)
+
+	// Setup data endpoint
+	addressDataRepo, err := repositories_address.NewExternalAddressDataRepository()
+	if err != nil {
+		panic(err)
+	}
+	addressDataService := services_address.NewAddressDataService(addressDataRepo)
+	addressDataController := controllers_address.NewAddressDataController(addressDataService)
+
+	rg.GET("/address/suggestions", addressController.GetSuggestions)
+	rg.GET("/address/data", addressDataController.GetLocationData)
+}
+
+---
+// urbverde-bff/routes/cards/cards_routes.go
+package cards
+
+import (
+	controllers_cards_weather "urbverde-api/controllers/cards/weather"
+	repositories_cards_weather "urbverde-api/repositories/cards/weather"
+	services_cards_weather "urbverde-api/services/cards/weather"
+
+	"github.com/gin-gonic/gin"
+)
+
+type CardsDataItem struct {
+	Title    string  `json:"title" example:"Nível de ilha de calor"`
+	Subtitle *string `json:"subtitle,omitempty" example:"Abaixo da média nacional de 0"`
+	Value    string  `json:"value" example:"25°C"`
+}
+
+type RankingDataItem struct {
+	Type   string `json:"type"`
+	Number int    `json:"number"`
+	Of     int    `json:"of"`
+}
+
+type RankingData struct {
+	Title    string            `json:"title" example:"Municipios do Estado"`
+	Subtitle *string           `json:"subtitle,omitempty" example:"Posição do seu município entre os 645 do Estado de São Paulo"`
+	Items    []RankingDataItem `json:"items"`
+}
+
+type ErrorResponse struct {
+	Message string `json:"message" example:"Erro ao processar a solicitação"`
+	Code    int    `json:"code" example:"400"`
+}
+
+// SetupCardsRoutes configures all weather-related card routes
+func SetupCardsRoutes(rg *gin.RouterGroup) {
+	setupTemperatureRoutes(rg)
+	setupHeatRoutes(rg)
+	setupRankingRoutes(rg)
+	setupInfoRoutes(rg)
+}
+
+// @Summary Retorna dados de temperatura
+// @Description Retorna os dados de temperatura para o município e ano fornecidos
+// @Tags cards/weather
+// @Accept json
+// @Produce json
+// @Param city query string true "Código de município"
+// @Param year query string false "Ano dos dados"
+// @Success 200 {object} []CardsDataItem
+// @Failure 400 {object} ErrorResponse
+// @Router /cards/weather/temperature [get]
+func setupTemperatureRoutes(rg *gin.RouterGroup) {
+	tempeRepo := repositories_cards_weather.NewExternalWeatherTemperatureRepository()
+	tempeService := services_cards_weather.NewWeatherTemperatureService(tempeRepo)
+	tempeController := controllers_cards_weather.NewWeatherTemperatureController(tempeService)
+
+	rg.GET("/cards/weather/temperature", tempeController.LoadTemperatureData)
+}
+
+// @Summary Retorna dados de calor extremo
+// @Description Retorna os dados de calor extremo para o município e ano fornecidos
+// @Tags cards/weather
+// @Accept json
+// @Produce json
+// @Param city query string true "Código de município"
+// @Param year query string false "Ano dos dados"
+// @Success 200 {object} []CardsDataItem
+// @Failure 400 {object} ErrorResponse
+// @Router /cards/weather/heat [get]
+func setupHeatRoutes(rg *gin.RouterGroup) {
+	heatRepo := repositories_cards_weather.NewExternalWeatherHeatRepository()
+	heatService := services_cards_weather.NewWeatherHeatService(heatRepo)
+	heatController := controllers_cards_weather.NewWeatherHeatController(heatService)
+
+	rg.GET("/cards/weather/heat", heatController.LoadHeatData)
+}
+
+// @Summary Retorna dados de ranking de clima
+// @Description Retorna os dados de ranking em clima para o município e ano fornecidos
+// @Tags cards/weather
+// @Accept json
+// @Produce json
+// @Param city query string true "Código de município"
+// @Param year query string false "Ano dos dados"
+// @Success 200 {object} []RankingData
+// @Failure 400 {object} ErrorResponse
+// @Router /cards/weather/ranking [get]
+func setupRankingRoutes(rg *gin.RouterGroup) {
+	rankRepo := repositories_cards_weather.NewExternalWeatherRankingRepository()
+	rankService := services_cards_weather.NewWeatherRankingService(rankRepo)
+	rankController := controllers_cards_weather.NewWeatherRankingController(rankService)
+
+	rg.GET("/cards/weather/ranking", rankController.LoadRankingData)
+}
+
+// @Summary Retorna dados adicionais
+// @Description Retorna dados adicionais para o município fornecido
+// @Tags cards/weather
+// @Accept json
+// @Produce json
+// @Param city query string true "Código de município"
+// @Success 200 {object} []CardsDataItem
+// @Failure 400 {object} ErrorResponse
+// @Router /cards/weather/info [get]
+func setupInfoRoutes(rg *gin.RouterGroup) {
+	infoRepo := repositories_cards_weather.NewExternalWeatherInfoRepository()
+	infoService := services_cards_weather.NewWeatherInfoService(infoRepo)
+	infoController := controllers_cards_weather.NewWeatherInfoController(infoService)
+
+	rg.GET("/cards/weather/info", infoController.LoadInfoData)
+}
+
+---
+// urbverde-bff/routes/categories/categories_routes.go
+package categories
+
+import (
+	controllers_categories "urbverde-api/controllers/categories"
+	repositories_categories "urbverde-api/repositories/categories"
+	services_categories "urbverde-api/services/categories"
+
+	"github.com/gin-gonic/gin"
+)
+
+func SetupCategoriesRoutes(rg *gin.RouterGroup) {
+	categoriesRepo, err := repositories_categories.NewCategoriesRepository()
+	if err != nil {
+		panic(err)
+	}
+	categoriesService := services_categories.NewCategoriesService(categoriesRepo)
+	categoriesController := controllers_categories.NewCategoriesController(categoriesService)
+
+	rg.GET("/categories", categoriesController.GetCategories)
+}
+
+---
+// urbverde-bff/routes/router.go
+package routes
+
+import (
+	"net/http"
+	_ "urbverde-api/docs"
+	"urbverde-api/routes/address"
+	"urbverde-api/routes/cards"
+	"urbverde-api/routes/categories"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+)
+
+func SetupRouter() *gin.Engine {
+	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * 60 * 60,
+	}))
+
+	// API routes under /v1
+	v1 := r.Group("/v1")
+	{
+		cards.SetupCardsRoutes(v1)
+		address.SetupAddressRoutes(v1)
+		categories.SetupCategoriesRoutes(v1)
+	}
+
+	// Swagger UI route: Register this after all other routes
+	config := ginSwagger.Config{
+		URL:                      "/swagger/doc.json",
+		DeepLinking:              true,
+		DefaultModelsExpandDepth: -1,
+		DocExpansion:             "list",
+	}
+
+	r.GET("/swagger/*any", ginSwagger.CustomWrapHandler(&config, swaggerFiles.Handler))
+
+	// Optional: Redirect root to Swagger
+	r.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+	})
+
+	return r
+}
+
+---
+// urbverde-bff/services/address/address_data_service.go
+package services_address
+
+import (
+	repositories_address "urbverde-api/repositories/address"
+)
+
+type AddressDataService interface {
+	GetLocationData(identifier string, locationType string) (*repositories_address.Location, error)
+}
+
+type addressDataService struct {
+	AddressDataRepository repositories_address.AddressDataRepository
+}
+
+func NewAddressDataService(ar repositories_address.AddressDataRepository) AddressDataService {
+	return &addressDataService{
+		AddressDataRepository: ar,
+	}
+}
+
+func (as *addressDataService) GetLocationData(identifier string, locationType string) (*repositories_address.Location, error) {
+	return as.AddressDataRepository.GetLocationData(identifier, locationType)
+}
+
+---
+// urbverde-bff/services/address/address_service.go
+package services_address
+
+import (
+	repositories_address "urbverde-api/repositories/address"
+)
+
+type AddressService interface {
+	GetSuggestions(query string) ([]repositories_address.CityResponse, error)
+}
+
+type addressService struct {
+	AddressRepository repositories_address.AddressRepository
+}
+
+func NewAddressService(ar repositories_address.AddressRepository) AddressService {
+	return &addressService{
+		AddressRepository: ar,
+	}
+}
+
+func (as *addressService) GetSuggestions(query string) ([]repositories_address.CityResponse, error) {
+	suggestions, err := as.AddressRepository.SearchAddress(query)
+	if err != nil {
+		return nil, err
+	}
+
+	return suggestions, nil
+}
+
+---
+// urbverde-bff/services/cards/weather/weather_heat_service.go
+package services_cards_weather
+
+import (
+	cards_shared "urbverde-api/repositories/cards"
+	repositories_cards_weather "urbverde-api/repositories/cards/weather"
+)
+
+type WeatherHeatService interface {
+	cards_shared.RepositoryBase
+	LoadHeatData(city string, year string) ([]repositories_cards_weather.HeatDataItem, error)
+}
+
+type weatherHeatService struct {
+	WeatherHeatRepository repositories_cards_weather.WeatherHeatRepository
+}
+
+func NewWeatherHeatService(ar repositories_cards_weather.WeatherHeatRepository) WeatherHeatService {
+	return &weatherHeatService{
+		WeatherHeatRepository: ar,
+	}
+}
+
+func (as *weatherHeatService) LoadYears(city string) ([]int, error) {
+	data, err := as.WeatherHeatRepository.LoadYears(city)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (as *weatherHeatService) LoadHeatData(city string, year string) ([]repositories_cards_weather.HeatDataItem, error) {
+	data, err := as.WeatherHeatRepository.LoadHeatData(city, year)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+---
+// urbverde-bff/services/cards/weather/weather_info_service.go
+package services_cards_weather
+
+import (
+	repositories_cards_weather "urbverde-api/repositories/cards/weather"
+)
+
+type WeatherInfoService interface {
+	LoadInfoData(city string) ([]repositories_cards_weather.InfoDataItem, error)
+}
+
+type weatherInfoService struct {
+	WeatherInfoRepository repositories_cards_weather.WeatherInfoRepository
+}
+
+func NewWeatherInfoService(ar repositories_cards_weather.WeatherInfoRepository) WeatherInfoService {
+	return &weatherInfoService{
+		WeatherInfoRepository: ar,
+	}
+}
+
+func (as *weatherInfoService) LoadInfoData(city string) ([]repositories_cards_weather.InfoDataItem, error) {
+	data, err := as.WeatherInfoRepository.LoadInfoData(city)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+---
+// urbverde-bff/services/cards/weather/weather_ranking_service.go
+package services_cards_weather
+
+import (
+	cards_shared "urbverde-api/repositories/cards"
+	repositories_cards_weather "urbverde-api/repositories/cards/weather"
+)
+
+type WeatherRankingService interface {
+	cards_shared.RepositoryBase
+	LoadRankingData(city string, year string) ([]repositories_cards_weather.RankingData, error)
+}
+
+type weatherRankingService struct {
+	WeatherRankingRepository repositories_cards_weather.WeatherRankingRepository
+}
+
+func NewWeatherRankingService(ar repositories_cards_weather.WeatherRankingRepository) WeatherRankingService {
+	return &weatherRankingService{
+		WeatherRankingRepository: ar,
+	}
+}
+
+func (as *weatherRankingService) LoadYears(city string) ([]int, error) {
+	data, err := as.WeatherRankingRepository.LoadYears(city)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (as *weatherRankingService) LoadRankingData(city string, year string) ([]repositories_cards_weather.RankingData, error) {
+	data, err := as.WeatherRankingRepository.LoadRankingData(city, year)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+---
+// urbverde-bff/services/cards/weather/weather_temperature_service.go
+package services_cards_weather
+
+import (
+	cards_shared "urbverde-api/repositories/cards"
+	repositories_cards_weather "urbverde-api/repositories/cards/weather"
+)
+
+type WeatherTemperatureService interface {
+	cards_shared.RepositoryBase
+	LoadTemperatureData(city string, year string) ([]repositories_cards_weather.TemperatureDataItem, error)
+}
+
+type weatherTemperatureService struct {
+	WeatherTemperatureRepository repositories_cards_weather.WeatherTemperatureRepository
+}
+
+func NewWeatherTemperatureService(ar repositories_cards_weather.WeatherTemperatureRepository) WeatherTemperatureService {
+	return &weatherTemperatureService{
+		WeatherTemperatureRepository: ar,
+	}
+}
+
+func (as *weatherTemperatureService) LoadYears(city string) ([]int, error) {
+	data, err := as.WeatherTemperatureRepository.LoadYears(city)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (as *weatherTemperatureService) LoadTemperatureData(city string, year string) ([]repositories_cards_weather.TemperatureDataItem, error) {
+	data, err := as.WeatherTemperatureRepository.LoadTemperatureData(city, year)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+---
+// urbverde-bff/services/categories/categories_service.go
+package services_categories
+
+import (
+	repositories_categories "urbverde-api/repositories/categories"
+)
+
+type CategoriesService interface {
+	GetCategories(cityCode string) (*repositories_categories.CategoriesResponse, error)
+}
+
+type categoriesService struct {
+	repo repositories_categories.CategoriesRepository
+}
+
+func NewCategoriesService(repo repositories_categories.CategoriesRepository) CategoriesService {
+	return &categoriesService{
+		repo: repo,
+	}
+}
+
+func (s *categoriesService) GetCategories(cityCode string) (*repositories_categories.CategoriesResponse, error) {
+	return s.repo.GetCategories(cityCode)
+}
+
+---
+// urbverde-bff/utils/utils.go
+package utils
+
+func StringPtr(s string) *string {
+	return &s
+}
+
