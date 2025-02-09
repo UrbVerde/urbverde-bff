@@ -1,8 +1,8 @@
 # urbverde-bff/docker-compose.yml
-version: "3.8"
-
 services:
   urbverde-bff:
+    image: urbverde-bff
+    container_name: urbverde-bff
     build:
       context: .
       args:
@@ -10,8 +10,37 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./docs:/app/docs:rw  # Added :rw flag to ensure read-write permissions
+      - ./docs:/app/docs:rw
     environment:
       - ENV=${ENV:-develop}
     env_file:
       - .env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:latest
+    restart: always
+    container_name: pg-urbverde-bff
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-pg-urbverde-bff}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: urbverde-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@urbverde.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-urbverde}
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
