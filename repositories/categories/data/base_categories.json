@@ -15,10 +15,10 @@
         "name": "Vegetação",
         "icon": "Oak Tree.svg",
         "layers": [
-          {"id": "pcv", "name": "Coberta vegetal (PCV)", "isPartner": false, "isNew": false},
+          {"id": "pcv", "name": "Cobertura vegetal (PCV)", "isPartner": false, "isNew": false},
           {"id": "icv", "name": "Cobertura vegetal por habitante (ICV)", "isPartner": false, "isNew": false},
           {"id": "idsa", "name": "Desigualdade sociambiental (IDSA)", "isPartner": false, "isNew": false},
-          {"id": "cvp", "name": "Cobertura vegetal por pixel", "isPartner": false, "isNew": false},
+          {"id": "cvp", "name": "Cobertura vegetal por satélite", "isPartner": false, "isNew": false},
           {"id": "ndvi", "name": "Vigor da vegetação (NDVI)", "isPartner": false, "isNew": false}
         ]
       },
@@ -27,9 +27,10 @@
         "name": "Parques e Praças",
         "icon": "Nature.svg",
         "layers": [
-          {"id": "park_distribution", "name": "Distribuição dos parques", "isPartner": false, "isNew": false},
-          {"id": "green_area_per_capita", "name": "Área verde por habitante", "isPartner": false, "isNew": false},
-          {"id": "green_area_accessibility", "name": "Acessibilidade a áreas verdes", "isPartner": false, "isNew": false}
+            {"id": "avg_distance_to_squares", "name": "Distância media até as praças", "isPartner": false, "isNew": false},
+            {"id": "square_area_per_capita", "name": "Área de praças por habitante", "isPartner": false, "isNew": false},
+            {"id": "square_served_area", "name": "Área atendida pelas praças", "isPartner": false, "isNew": false},
+            {"id": "served_population", "name": "População atendida pelas praças", "isPartner": false, "isNew": false}
         ]
       }
     ]
