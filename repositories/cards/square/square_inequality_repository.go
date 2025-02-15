@@ -2,6 +2,7 @@ package repositories_cards_square
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	cards_shared "urbverde-api/repositories/cards"
@@ -109,10 +110,10 @@ func (r *externalSquareInequalityRepository) LoadInequalityData(city string, yea
 	inequalityProps := filtered.Properties.(SquareInequalityProperties)
 
 	// Multiply percentage values by 100 here
-	black_indigenous_value := strconv.FormatFloat(inequalityProps.H12a*100, 'f', 2, 64)
-	women_value := strconv.FormatFloat(inequalityProps.H11a*100, 'f', 2, 64)
-	children_value := strconv.FormatFloat(inequalityProps.H10a*100, 'f', 2, 64)
-	elderly_value := strconv.FormatFloat(inequalityProps.H9a*100, 'f', 2, 64)
+	black_indigenous_value := strconv.Itoa(int(math.Round(inequalityProps.H12a * 100)))
+	women_value := strconv.Itoa(int(math.Round(inequalityProps.H11a * 100)))
+	children_value := strconv.Itoa(int(math.Round(inequalityProps.H10a * 100)))
+	elderly_value := strconv.Itoa(int(math.Round(inequalityProps.H9a * 100)))
 
 	var general_subtitle string = "Porcentagem vivendo fora da vizinhança das praças"
 

@@ -48,7 +48,6 @@ func normalizeText(s string) string {
 }
 
 func (r *externalAddressRepository) SearchAddress(query string) ([]CityResponse, error) {
-	// Load cities from local file instead of IBGE API
 	data, err := os.ReadFile("repositories/address/data/cities.json")
 	if err != nil {
 		return nil, fmt.Errorf("error reading cities file: %w", err)
@@ -62,25 +61,22 @@ func (r *externalAddressRepository) SearchAddress(query string) ([]CityResponse,
 	var results []CityResponse
 	normalizedQuery := normalizeText(query)
 
-	// Search through local data
 	for code, city := range citiesData.Features {
-		normalizedCityName := normalizeText(city.Name)
-		if strings.HasPrefix(normalizedCityName, normalizedQuery) {
-			// Convert string code to int
+		normalizedDisplayName := normalizeText(city.DisplayName)
+		if strings.Contains(normalizedDisplayName, normalizedQuery) {
 			cdMun, err := strconv.Atoi(code)
 			if err != nil {
-				continue // Skip this entry if code can't be converted
+				continue
 			}
 
 			results = append(results, CityResponse{
 				DisplayName: city.DisplayName,
 				CdMun:       cdMun,
-				Type:        "city", // Add this line
+				Type:        "city",
 			})
 		}
 	}
 
-	// Sort results
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].DisplayName < results[j].DisplayName
 	})
