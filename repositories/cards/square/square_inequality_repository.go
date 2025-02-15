@@ -108,10 +108,11 @@ func (r *externalSquareInequalityRepository) LoadInequalityData(city string, yea
 
 	inequalityProps := filtered.Properties.(SquareInequalityProperties)
 
-	black_indigenous_value := strconv.FormatFloat(inequalityProps.H12a, 'f', 2, 64)
-	women_value := strconv.FormatFloat(inequalityProps.H11a, 'f', 2, 64)
-	children_value := strconv.FormatFloat(inequalityProps.H10a, 'f', 2, 64)
-	elderly_value := strconv.FormatFloat(inequalityProps.H9a, 'f', 2, 64)
+	// Multiply percentage values by 100 here
+	black_indigenous_value := strconv.FormatFloat(inequalityProps.H12a*100, 'f', 2, 64)
+	women_value := strconv.FormatFloat(inequalityProps.H11a*100, 'f', 2, 64)
+	children_value := strconv.FormatFloat(inequalityProps.H10a*100, 'f', 2, 64)
+	elderly_value := strconv.FormatFloat(inequalityProps.H9a*100, 'f', 2, 64)
 
 	var general_subtitle string = "Porcentagem vivendo fora da vizinhança das praças"
 
