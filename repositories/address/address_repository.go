@@ -72,6 +72,11 @@ func (r *externalAddressRepository) SearchAddress(query string) ([]CityResponse,
 	normalizedQuery := normalizeText(query)
 
 	for _, city := range cities {
+		// Only include cities from São Paulo state
+		if city.Microrregiao.Mesorregiao.UF.Sigla != "SP" {
+			continue
+		}
+
 		normalizedCityName := normalizeText(city.Nome)
 		displayName := fmt.Sprintf("%s - %s", city.Nome, city.Microrregiao.Mesorregiao.UF.Sigla)
 
