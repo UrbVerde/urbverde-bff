@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"sort"
 	"strings"
@@ -48,9 +49,12 @@ func normalizeText(s string) string {
 }
 
 func (r *externalAddressRepository) SearchAddress(query string) ([]CityResponse, error) {
-	url := r.apiURL + "?nome=" + query
+	// Normalize the query for API request
+	normalizedAPIQuery := normalizeText(query)
+	encodedQuery := url.QueryEscape(normalizedAPIQuery)
+	apiURL := r.apiURL + "?nome=" + encodedQuery
 
-	resp, err := http.Get(url)
+	resp, err := http.Get(apiURL)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -65,10 +69,8 @@ func (r *externalAddressRepository) SearchAddress(query string) ([]CityResponse,
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	var exactMatches []CityResponse
-	var prefixMatches []CityResponse
-	var otherMatches []CityResponse
-
+	var cityResponses []CityResponse
+	lowercaseQuery := strings.ToLower(query)
 	normalizedQuery := normalizeText(query)
 
 	for _, city := range cities {
@@ -77,46 +79,42 @@ func (r *externalAddressRepository) SearchAddress(query string) ([]CityResponse,
 			continue
 		}
 
+		lowercaseCityName := strings.ToLower(city.Nome)
 		normalizedCityName := normalizeText(city.Nome)
-		displayName := fmt.Sprintf("%s - %s", city.Nome, city.Microrregiao.Mesorregiao.UF.Sigla)
 
-		if strings.HasPrefix(normalizedCityName, normalizedQuery) {
-			if normalizedCityName == normalizedQuery {
-				// Exact match
-				exactMatches = append(exactMatches, CityResponse{
-					DisplayName: displayName,
-					CdMun:       city.ID,
-				})
-			} else {
-				// Prefix match
-				prefixMatches = append(prefixMatches, CityResponse{
-					DisplayName: displayName,
-					CdMun:       city.ID,
-				})
-			}
-		} else if strings.Contains(normalizedCityName, normalizedQuery) {
-			// Contains but not prefix
-			otherMatches = append(otherMatches, CityResponse{
-				DisplayName: displayName,
-				CdMun:       city.ID,
-			})
+		// Skip cities that don't match either with or without accents
+		if !strings.HasPrefix(lowercaseCityName, lowercaseQuery) &&
+			!strings.HasPrefix(normalizedCityName, normalizedQuery) &&
+			!strings.Contains(normalizedCityName, normalizedQuery) {
+			continue
 		}
-	}
 
-	// Sort each category alphabetically
-	sortByDisplayName := func(responses []CityResponse) {
-		sort.Slice(responses, func(i, j int) bool {
-			return responses[i].DisplayName < responses[j].DisplayName
+		cityResponses = append(cityResponses, CityResponse{
+			DisplayName: fmt.Sprintf("%s - %s", city.Nome, city.Microrregiao.Mesorregiao.UF.Sigla),
+			CdMun:       city.ID,
 		})
 	}
 
-	sortByDisplayName(exactMatches)
-	sortByDisplayName(prefixMatches)
-	sortByDisplayName(otherMatches)
+	// Sort with custom comparator that prioritizes accent-matches
+	sort.Slice(cityResponses, func(i, j int) bool {
+		nameI := strings.Split(cityResponses[i].DisplayName, " - ")[0]
+		nameJ := strings.Split(cityResponses[j].DisplayName, " - ")[0]
 
-	// Combine results with priority: exact -> prefix -> contains
-	result := append(exactMatches, prefixMatches...)
-	result = append(result, otherMatches...)
+		lowercaseNameI := strings.ToLower(nameI)
+		lowercaseNameJ := strings.ToLower(nameJ)
 
-	return result, nil
+		// Check if either name starts with the query (with accents)
+		startsWithI := strings.HasPrefix(lowercaseNameI, lowercaseQuery)
+		startsWithJ := strings.HasPrefix(lowercaseNameJ, lowercaseQuery)
+
+		// If one starts with the query and the other doesn't, prioritize the one that does
+		if startsWithI != startsWithJ {
+			return startsWithI
+		}
+
+		// If both or neither start with the query, sort alphabetically
+		return cityResponses[i].DisplayName < cityResponses[j].DisplayName
+	})
+
+	return cityResponses, nil
 }
